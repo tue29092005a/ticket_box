@@ -3,6 +3,8 @@
 ## Mô tả
 Tài liệu đặc tả kiến trúc xử lý tải cực hạn cho hệ thống bán vé sự kiện TicketBox, được thiết kế để đáp ứng kịch bản flash sale với **80.000 user truy cập trong 5 phút đầu** mà không làm sập Database (PostgreSQL) hay Central Cache (Redis Cluster). 
 
+Đặc biệt, hệ thống hoạt động dưới kiến trúc **High Availability (HA) API Cluster**, trong đó nhiều bản sao (Replicas) của ứng dụng Node.js chạy song song dưới sự điều phối của một **Nginx Load Balancer**.
+
 Hệ thống áp dụng Mô hình Cache 2 tầng (Two-Tier Caching) kết hợp cơ chế Đẩy dữ liệu chủ động (Server-Sent Events - SSE), được chia làm hai chiến lược riêng biệt cho hai loại phân khu:
 1. **Phân khu Vé Thường (GA, CAT, VIP):** Sử dụng Hybrid Caching (In-Memory Cache + Redis String/Counter) kết hợp Eventual Consistency qua Pub/Sub và SSE.
 2. **Phân khu SVIP (Chọn vị trí đích danh):** Sử dụng cấu trúc Redis Hash Map kết hợp HSETNX nguyên tử làm "trọng tài tối cao" để triệt tiêu lỗi tranh chấp vị trí (Zero Seat Clash).
@@ -39,7 +41,7 @@ Hệ thống áp dụng Mô hình Cache 2 tầng (Two-Tier Caching) kết hợp 
     * Nếu Update thành công: Ghế chính thức thuộc về User. Phát SSE.
     * Nếu Update thất bại (do DB đã lưu cho người khác): Rollback Redis và báo lỗi.
 *   **Bước 4 - Thanh toán:** App Server gọi lệnh `UPDATE seat_inventory SET status='BOOKED' WHERE seatNo=:seat AND reservedBy=:userId`. Nếu thành công, xuất vé.
-*   **Bước 5 - Cập nhật sơ đồ (Pub/Sub + SSE):** Sau khi khóa hoặc mua thành công, Worker phát tín hiệu `{"zone": "svip", "seat": "D08", "status": "booked"}`. Các App Server nhận tin, sửa đổi Local Cache và đẩy SSE để đổi màu ghế.
+*   **Bước 5 - Cập nhật sơ đồ liên máy chủ (Cross-Server Pub/Sub + SSE):** Sau khi khóa hoặc mua thành công, Worker phát tín hiệu `{"zone": "svip", "seat": "D08", "status": "booked"}` qua **Redis Pub/Sub**. Tất cả các Node.js Replicas trong Cluster (được phân phối bởi Nginx) đều lắng nghe kênh Pub/Sub này. Khi nhận được tin, chúng sẽ cập nhật Local Cache độc lập trên mỗi máy chủ, đồng thời phát luồng SSE xuống tất cả các Client đang cắm ở từng máy chủ tương ứng. Cơ chế này loại bỏ hoàn toàn giới hạn "Stateful" của WebSocket/SSE, giúp hệ thống Scale-Out vô hạn.
 
 ## Kịch bản lỗi
 
