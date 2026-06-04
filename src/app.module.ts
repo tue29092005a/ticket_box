@@ -12,10 +12,14 @@ import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
+import { InfoModule } from './info/info.module';
+import { MongooseModule } from '@nestjs/mongoose';
+import { mongoConfig } from './config/mongo.config';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(typeOrmConfig),
+    MongooseModule.forRoot(mongoConfig.uri),
     ScheduleModule.forRoot(),
     RedisModule,
     RabbitMQModule,
@@ -24,6 +28,7 @@ import { SearchModule } from './search/search.module';
     BookingModule,
     NotificationsModule,
     SearchModule,
+    InfoModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'ticketbox-client', 'dist'),
     }),

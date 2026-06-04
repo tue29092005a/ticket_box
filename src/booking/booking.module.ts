@@ -7,7 +7,9 @@ import { SeatInventory } from './entities/seat-inventory.entity';
 import { ZoneInventory } from './entities/zone-inventory.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([SeatInventory, ZoneInventory])],
+  imports: [
+    TypeOrmModule.forFeature([SeatInventory, ZoneInventory]),
+  ],
   controllers: [BookingController],
   providers: [BookingService, SseService],
   exports: [BookingService, SseService],

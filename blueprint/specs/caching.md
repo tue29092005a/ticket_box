@@ -8,18 +8,19 @@ Hệ thống áp dụng Mô hình Cache 2 tầng (Two-Tier Caching) kết hợp 
 2. **Phân khu SVIP (Chọn vị trí đích danh):** Sử dụng cấu trúc Redis Hash Map kết hợp HSETNX nguyên tử làm "trọng tài tối cao" để triệt tiêu lỗi tranh chấp vị trí (Zero Seat Clash).
 
 ## Phân loại dữ liệu và Chiến lược Caching
-- **Chiến lược 1: Cache-Aside (Lazy Loading) chủ động** $\rightarrow$ Áp dụng cho Dữ liệu Tĩnh hoặc Ít thay đổi bao gồm: Thông tin chi tiết Concert (tên show, thời gian, địa điểm, mô tả sự kiện), AI Artist Bio (bản giới thiệu nghệ sĩ ngắn gọn được trích xuất tự động từ file PDF/press kit), Sơ đồ chỗ ngồi gốc dạng SVG, Cấu hình các loại hạng vé và giá vé do Ban tổ chức thiết lập.
+- **Chiến lược 1: Cache-Aside + SingleFlight (Mutex Lock)** $\rightarrow$ Áp dụng cho Dữ liệu Ít thay đổi (Thông tin Concert, Tên/Bio Nghệ sĩ). Dữ liệu này được lưu trữ phân tán: MongoDB quản lý nội dung phi cấu trúc (Thông tin Concert chi tiết, Artist Bio, Mô tả sự kiện), trong khi PostgreSQL quản lý dữ liệu có cấu trúc quan hệ (Thời gian, Địa điểm biểu diễn).
 - **Chiến lược 2: Hybrid Caching (Phương án 3a)** $\rightarrow$ Áp dụng cho Dữ liệu Số lượng (Counters) biến động liên tục dưới tải cực hạn bao gồm: Số lượng tồn kho vé còn lại của phân khu Vé Thường (GA, CAT, VIP) và Bộ đếm giới hạn số lượng vé đặt trên mỗi tài khoản của User (Per-User String Counter).
 - **Chiến lược 3: Thực thể tương tác đích danh (Phương án 3b)** $\rightarrow$ Áp dụng cho Dữ liệu Sơ đồ Ghế SVIP phức tạp bao gồm: Sơ đồ hiển thị vị trí ghế tương tác của phân khu SVIP, mảng trạng thái chi tiết của từng mã ghế đơn lẻ (`available`, `USER_123_HOLD`, `booked`) và danh sách tọa độ ghế chi tiết đang khóa giữ của từng tài khoản người dùng.
 - **Chiến lược 4: Hybrid Synchronous-Asynchronous Caching** $\rightarrow$ Kế thừa phương án 3b cho khu SVIP nhưng bổ sung thêm **Chốt chặn Database đồng bộ (Synchronous DB Write)**. PostgreSQL sẽ là người phán xử cuối cùng cho mọi giao dịch đổi trạng thái ghế để bảo vệ tuyệt đối khỏi lỗi Mất dữ liệu (Data Loss) do Redis sập hoặc Lệch pha (Failover).
 
 ## Luồng chính
 
-### 1. Luồng Tác vụ Đọc (Hiển thị thông tin & Sơ đồ ghế)
-*   **Quy trình đọc Dữ liệu Tĩnh (Cache-Aside chủ động):** Khi client truy cập trang chủ hoặc trang chi tiết show, App Server kiểm tra dữ liệu trong cụm Redis Cluster trước. Nếu dữ liệu tồn tại (Cache Hit), trả về kết quả ngay cho Client. Nếu không tồn tại (Cache Miss), App Server truy vấn vào Database PostgreSQL để đọc dữ liệu gốc, trả kết quả về cho Client, đồng thời chủ động nạp lại kết quả đó vào Redis với TTL vô hạn. Khi Ban tổ chức tạo mới hoặc chỉnh sửa thông tin concert, cập nhật giá vé ở trang Admin, hệ thống sau khi ghi xuống PostgreSQL thành công sẽ lập tức thực hiện lệnh xóa hoặc ghi đè thẳng (Invalidate chủ động) key tương ứng trên cụm Redis để đảm bảo tính nhất quán dữ liệu ngay tức thì cho người dùng.
-*   **Tầng 1 (In-Memory Cache):** Tại mỗi App Server (ví dụ node-cache, Go-Cache), thông tin show được lưu với TTL = 5 phút, số lượng vé/trạng thái ghế được lưu với TTL = 1 giây. Toàn bộ mảng trạng thái xanh/đỏ của sơ đồ ghế SVIP được gộp thành chuỗi JSON ngắn lưu tại đây. Luồng này giúp gọt tải hiển thị của 80.000 user xuống chỉ còn vài chục request/giây chạm tới Redis.
-*   **Tầng 2 (Centralized Cache - Redis Cluster):** Đóng vai trò là nguồn dữ liệu chuẩn.
-*   **Cơ chế chống nghẽn cục bộ (Cache Stampede Protection):** Khi Tầng 1 hết hạn (Cache Miss), App Server bắt buộc dùng Local Mutex Lock/SingleFlight. Chỉ duy nhất 1 request đại diện được phép đi gọi Redis để lấy số liệu mới và nạp lại vào cache, các request khác dùng chung kết quả, tuyệt đối không để hàng trăm request nã thẳng xuống Redis.
+### 1. Luồng Tác vụ Đọc (Hiển thị thông tin Concert & Nghệ sĩ)
+*   **Quy trình Cache-Aside kết hợp SingleFlight:** Khi Client truy cập trang chi tiết sự kiện, App Server tiến hành kiểm tra dữ liệu trên cụm Redis Cluster.
+*   **Cache Hit:** Nếu dữ liệu tồn tại, trả về kết quả ngay lập tức cho Client.
+*   **Cache Miss & Chống Cache Stampede:** Nếu Redis rỗng, tính năng **SingleFlight (Mutex Lock)** sẽ khóa luồng truy cập trên cấp độ App Server. Kể cả có hàng vạn request cùng gọi tới, chỉ duy nhất **1 request đại diện** được phép đi qua để truy vấn Database gốc (Lấy mô tả sự kiện/artist bio từ MongoDB và ghép với thông tin thời gian/địa điểm từ PostgreSQL).
+*   **Nạp lại Cache:** Đại diện sau khi lấy được dữ liệu sẽ lưu vào Redis, giải phóng Lock và trả dữ liệu về cho tất cả các request đang đứng chờ. Cụm Database (MongoDB & PostgreSQL) tuyệt đối an toàn trước làn sóng 80.000 users.
+*   **Invalidate (Vô hiệu hóa):** Khi admin cập nhật thông tin sự kiện trên CMS, backend sẽ thực hiện xóa (Invalidate) key tương ứng trên Redis để hệ thống tự động làm mới ở request tiếp theo.
 
 ### 2. Luồng Tác vụ Ghi - Phân khu Vé Thường (VIP, Normal - Khối lượng K)
 *   **Bước 1 - Giữ chỗ thần tốc trên RAM (Trọng tài Redis):** App Server kiểm tra giới hạn cá nhân bằng `INCRBY` và trừ kho tổng bằng `HINCRBY kho_tổng -K`. Nếu thành công, Redis ghi nhận User đang giữ K vé. Tuyệt đối KHÔNG ghi trạng thái PENDING xuống Database để tránh thảm họa "Hot Row".

@@ -22,10 +22,6 @@ export class BookingController {
     return this.bookingService.getInventory(id);
   }
 
-  @Get('show/:id')
-  async getShowInfo(@Param('id') id: string) {
-    return this.bookingService.getShowInfo(id);
-  }
 
   @UseGuards(JwtAuthGuard)
   @Post('ga')

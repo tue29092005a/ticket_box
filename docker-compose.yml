@@ -43,6 +43,53 @@ services:
     networks:
       - ticketbox-network
 
+  mongodb:
+    image: mongo:latest
+    container_name: ticketbox-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    networks:
+      - ticketbox-network
+
+  api:
+    build: .
+    image: ticketbox-api
+    networks:
+      - ticketbox-network
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USERNAME=ticketbox
+      - DB_PASSWORD=password
+      - DB_NAME=ticketbox_db
+      - MONGO_URI=mongodb://admin:password@mongodb:27017/ticketbox_db?authSource=admin
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    deploy:
+      replicas: 3
+    restart: always
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+      - rabbitmq
+
+  nginx:
+    image: nginx:alpine
+    container_name: ticketbox-nginx
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+    networks:
+      - ticketbox-network
+
 networks:
   ticketbox-network:
     driver: bridge
+

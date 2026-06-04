@@ -1,0 +1,5 @@
+node_modules
+dist
+ticketbox-client/node_modules
+ticketbox-client/dist
+.git

@@ -13,7 +13,6 @@ import { ZoneInventory } from './entities/zone-inventory.entity';
 @Injectable()
 export class BookingService implements OnModuleInit {
   private readonly logger = new Logger(BookingService.name);
-  private localCache = new NodeCache({ stdTTL: 5 }); // Hybrid Cache TTL 5s
   private seatCache = new NodeCache({ stdTTL: 60 });
   private activePromises = new Map<string, Promise<any>>(); // SingleFlight pattern
 
@@ -50,54 +49,6 @@ export class BookingService implements OnModuleInit {
       ]);
       this.logger.log('Seeded 75 VIP and 100 Normal zones successfully.');
     }
-  }
-
-  // Lấy thông tin Show với Hybrid Caching và SingleFlight (Mutex Lock cục bộ)
-  async getShowInfo(showId: string) {
-    const cacheKey = `show_info:${showId}`;
-    
-    // 1. Đọc từ Local Cache (L1) - Rất nhanh, giảm tải Redis
-    const localData = this.localCache.get(cacheKey);
-    if (localData) return localData;
-
-    // 2. SingleFlight Pattern: Tránh Cache Stampede
-    // Nếu có nhiều request cùng lúc khi cache L1 rỗng, chỉ 1 request được gọi xuống Redis/DB
-    if (this.activePromises.has(cacheKey)) {
-      return this.activePromises.get(cacheKey);
-    }
-
-    const promise = (async () => {
-      try {
-        // 3. Lấy từ Redis (L2)
-        const redisData = await this.redis.get(cacheKey);
-        if (redisData) {
-          const parsed = JSON.parse(redisData);
-          this.localCache.set(cacheKey, parsed);
-          return parsed;
-        }
-
-        // 4. Fallback xung DB
-        const dbData = await this.redis.get(`show_info:${showId}:db`);
-        let finalData;
-        if (dbData) {
-            finalData = JSON.parse(dbData);
-        } else {
-            // Simulated real DB fetch if even that is missing, but let's assume we can fetch via typeorm or just return what we have
-            finalData = { id: showId, name: 'Anh Trai Say Hi (From DB)', ga_total: 1000, svip_total: 200 };
-        }
-        
-        // Lu lAn Redis
-        await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60); // 60s trAn Redis
-        this.localCache.set(cacheKey, finalData);
-        
-        return finalData;
-      } finally {
-        this.activePromises.delete(cacheKey); // Giải phóng Lock
-      }
-    })();
-
-    this.activePromises.set(cacheKey, promise);
-    return promise;
   }
 
   // Lấy trạng thái tất cả ghế SVIP
