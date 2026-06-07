@@ -10,6 +10,8 @@ services:
       POSTGRES_DB: ticketbox_db
     networks:
       - ticketbox-network
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   meilisearch:
     image: getmeili/meilisearch:v1.7
@@ -53,29 +55,77 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
     networks:
       - ticketbox-network
+    volumes:
+      - mongodata:/data/db
 
-  api:
-    build: .
-    image: ticketbox-api
-    networks:
-      - ticketbox-network
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USERNAME=ticketbox
-      - DB_PASSWORD=password
-      - DB_NAME=ticketbox_db
-      - MONGO_URI=mongodb://admin:password@mongodb:27017/ticketbox_db?authSource=admin
-      - REDIS_HOST=redis
-      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-    deploy:
-      replicas: 3
-    restart: always
-    depends_on:
-      - postgres
-      - mongodb
-      - redis
-      - rabbitmq
+  # auth-service:
+  #   build: .
+  #   image: ticketbox-api
+  #   container_name: ticketbox-auth-service
+  #   networks:
+  #     - ticketbox-network
+  #   environment:
+  #     - SERVICE_NAME=auth
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USERNAME=ticketbox
+  #     - DB_PASSWORD=password
+  #     - DB_NAME=ticketbox_db
+  #     - MONGO_URI=mongodb://admin:password@mongodb:27017/ticketbox_db?authSource=admin
+  #     - REDIS_HOST=redis
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #   restart: always
+  #   depends_on:
+  #     - postgres
+  #     - mongodb
+  #     - redis
+  #     - rabbitmq
+
+  # booking-service:
+  #   build: .
+  #   image: ticketbox-api
+  #   container_name: ticketbox-booking-service
+  #   networks:
+  #     - ticketbox-network
+  #   environment:
+  #     - SERVICE_NAME=booking
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USERNAME=ticketbox
+  #     - DB_PASSWORD=password
+  #     - DB_NAME=ticketbox_db
+  #     - MONGO_URI=mongodb://admin:password@mongodb:27017/ticketbox_db?authSource=admin
+  #     - REDIS_HOST=redis
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #   restart: always
+  #   depends_on:
+  #     - postgres
+  #     - mongodb
+  #     - redis
+  #     - rabbitmq
+
+  # info-service:
+  #   build: .
+  #   image: ticketbox-api
+  #   container_name: ticketbox-info-service
+  #   networks:
+  #     - ticketbox-network
+  #   environment:
+  #     - SERVICE_NAME=info
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_USERNAME=ticketbox
+  #     - DB_PASSWORD=password
+  #     - DB_NAME=ticketbox_db
+  #     - MONGO_URI=mongodb://admin:password@mongodb:27017/ticketbox_db?authSource=admin
+  #     - REDIS_HOST=redis
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #   restart: always
+  #   depends_on:
+  #     - postgres
+  #     - mongodb
+  #     - redis
+  #     - rabbitmq
 
   nginx:
     image: nginx:alpine
@@ -84,12 +134,14 @@ services:
       - "3000:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api
     networks:
       - ticketbox-network
 
 networks:
   ticketbox-network:
     driver: bridge
+
+volumes:
+  pgdata:
+  mongodata:
 

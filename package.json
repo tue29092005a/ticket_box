@@ -9,6 +9,9 @@
     "build": "tsc",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "ts-node src/main.ts",
+    "start:auth": "cross-env PORT=3001 SERVICE_NAME=auth ts-node src/main.ts",
+    "start:booking": "cross-env PORT=3002 SERVICE_NAME=booking ts-node src/main.ts",
+    "start:info": "cross-env PORT=3003 SERVICE_NAME=info ts-node src/main.ts",
     "start:worker": "ts-node src/apps-worker/processors/order.processor.ts"
   },
   "dependencies": {
@@ -54,6 +57,7 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/pdf-parse": "^1.1.4",
     "@types/qrcode": "^1.5.5",
+    "cross-env": "^10.1.0",
     "jest": "^30.4.2",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.1",

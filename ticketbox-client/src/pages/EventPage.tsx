@@ -80,7 +80,7 @@ export const EventPage: React.FC = () => {
       <nav className="bg-primary-container dark:bg-primary-container docked full-width top-0 z-50 shadow-sm transition-all duration-300">
         <div className="flex justify-between items-center px-margin-desktop py-4 w-full max-w-container-max mx-auto">
           <div className="flex items-center gap-gutter">
-            <span className="text-headline-lg font-headline-lg font-bold text-on-primary-container">ticketbox</span>
+            <a href="/" className="text-headline-lg font-headline-lg font-bold text-on-primary-container hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
             <div className="hidden md:flex flex-col relative min-w-[320px]">
               <div className="flex items-center bg-white/20 rounded-lg px-4 py-2 gap-2">
                 <span className="material-symbols-outlined text-on-primary-container/70">search</span>

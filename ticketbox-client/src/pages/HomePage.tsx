@@ -29,7 +29,7 @@ export const HomePage: React.FC = () => {
       <header className="bg-primary-container dark:bg-primary-container text-on-primary-container docked full-width top-0 shadow-sm z-50 sticky transition-all">
         <div className="flex justify-between items-center px-margin-desktop py-4 w-full max-w-container-max mx-auto">
           <div className="flex items-center gap-gutter">
-            <h1 className="text-headline-lg font-headline-lg font-bold text-on-primary-container tracking-tight">ticketbox</h1>
+            <a href="/" className="text-headline-lg font-headline-lg font-bold text-on-primary-container tracking-tight hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
             <div className="hidden md:flex relative group">
               <input
                 className="bg-on-primary-fixed-variant/20 border-none rounded-full py-2 pl-10 pr-4 text-on-primary-container placeholder-on-primary-container/60 w-80 focus:ring-2 focus:ring-on-primary-container transition-all"

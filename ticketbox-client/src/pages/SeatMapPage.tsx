@@ -30,13 +30,14 @@ export const SeatMapPage: React.FC = () => {
   const [normalCount, setNormalCount] = useState(0);
   const [vipRemaining, setVipRemaining] = useState(50);
   const [normalRemaining, setNormalRemaining] = useState(100);
+  const [isBookingDown, setIsBookingDown] = useState(false);
 
   useEffect(() => {
     // Lấy số lượng vé VIP và Normal còn lại khi load trang
     axiosClient.get('/booking/show/1/inventory').then((res) => {
       setVipRemaining(res.data.VIP);
       setNormalRemaining(res.data.Normal);
-    }).catch(console.error);
+    }).catch(() => setIsBookingDown(true));
 
     // Lấy trạng thái ghế SVIP ban đầu
     axiosClient.get('/booking/show/1/seats').then((res) => {
@@ -45,7 +46,7 @@ export const SeatMapPage: React.FC = () => {
         Object.keys(res.data).forEach(seatId => booked.add(seatId));
         setBookedSeats(booked);
       }
-    }).catch(console.error);
+    }).catch(() => setIsBookingDown(true));
   }, []);
 
   const [bookedSeats, setBookedSeats] = useState<Set<string>>(new Set());
@@ -81,6 +82,10 @@ export const SeatMapPage: React.FC = () => {
   });
 
   const toggleSeat = (seatId: string) => {
+    if (isBookingDown) {
+      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+      return;
+    }
     if (!user) {
       setIsLoginModalOpen(true);
       return;
@@ -97,6 +102,10 @@ export const SeatMapPage: React.FC = () => {
   const totalTickets = selectedSeats.size + vipCount + normalCount;
 
   const handleCheckout = async () => {
+    if (isBookingDown) {
+      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+      return;
+    }
     if (!user) {
       setIsLoginModalOpen(true);
       return;
@@ -129,6 +138,9 @@ export const SeatMapPage: React.FC = () => {
       if (error.response?.status === 400) {
         // Handle lỗi vượt quá quota vé thường, hoặc bị trùng ghế SVIP
         alert("Lỗi đặt vé: " + (error.response.data?.message || "Ghế đã có người đặt (Zero Seat Clash) hoặc bạn đã vượt quá giới hạn vé!"));
+      } else if (!error.response || error.response.status === 502 || error.response.status === 504) {
+        setIsBookingDown(true);
+        alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
       } else {
         alert("Có lỗi xảy ra khi kết nối máy chủ. Vui lòng thử lại.");
       }
@@ -254,15 +266,15 @@ export const SeatMapPage: React.FC = () => {
           {/* Legend */}
           <div className="flex gap-8 mb-12">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-white"></div>
+              <div className="w-3 h-3 rounded-full bg-[#e53935]"></div>
               <span className="text-xs text-on-surface-variant">Đang trống</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-primary-container"></div>
+              <div className="w-3 h-3 rounded-full bg-[#26bc8a]"></div>
               <span className="text-xs text-on-surface-variant">Đang chọn</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-error"></div>
+              <div className="w-3 h-3 rounded-full bg-[#5c5c5c]"></div>
               <span className="text-xs text-on-surface-variant">Không chọn được</span>
             </div>
           </div>
@@ -371,6 +383,10 @@ export const SeatMapPage: React.FC = () => {
               <div className="flex items-center justify-end gap-2">
                 <button 
                   onClick={() => {
+                    if (isBookingDown) {
+                      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+                      return;
+                    }
                     if (!user) { setIsLoginModalOpen(true); return; }
                     setVipCount(Math.max(0, vipCount - 1));
                   }}
@@ -382,6 +398,10 @@ export const SeatMapPage: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => {
+                    if (isBookingDown) {
+                      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+                      return;
+                    }
                     if (!user) { setIsLoginModalOpen(true); return; }
                     setVipCount(Math.min(vipRemaining, vipCount + 1));
                   }}
@@ -405,6 +425,10 @@ export const SeatMapPage: React.FC = () => {
               <div className="flex items-center justify-end gap-2">
                 <button 
                   onClick={() => {
+                    if (isBookingDown) {
+                      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+                      return;
+                    }
                     if (!user) { setIsLoginModalOpen(true); return; }
                     setNormalCount(Math.max(0, normalCount - 1));
                   }}
@@ -416,6 +440,10 @@ export const SeatMapPage: React.FC = () => {
                 </div>
                 <button 
                   onClick={() => {
+                    if (isBookingDown) {
+                      alert("Hệ thống đặt vé hiện đang bảo trì hoặc mất kết nối. Xin vui lòng thử lại sau.");
+                      return;
+                    }
                     if (!user) { setIsLoginModalOpen(true); return; }
                     setNormalCount(Math.min(normalRemaining, normalCount + 1));
                   }}

@@ -261,7 +261,7 @@ export const PaymentPage: React.FC = () => {
       <footer className="w-full mt-margin-desktop bg-surface-container-lowest border-t border-outline-variant">
         <div className="grid grid-cols-2 md:grid-cols-4 px-6 md:px-margin-desktop py-12 max-w-container-max mx-auto gap-gutter">
           <div className="col-span-2 md:col-span-1">
-            <div className="text-headline-md font-headline-md text-primary font-bold mb-4">ticketbox</div>
+            <a href="/" className="text-headline-md font-headline-md text-primary font-bold mb-4 hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
             <p className="font-body-sm text-on-surface-variant mb-6">Nền tảng bán vé sự kiện hàng đầu Việt Nam.</p>
           </div>
           <div className="flex flex-col gap-3">

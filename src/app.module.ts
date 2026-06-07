@@ -16,22 +16,34 @@ import { InfoModule } from './info/info.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfig } from './config/mongo.config';
 
+const coreModules = [
+  TypeOrmModule.forRoot(typeOrmConfig),
+  MongooseModule.forRoot(mongoConfig.uri),
+  ScheduleModule.forRoot(),
+  RedisModule,
+  RabbitMQModule,
+  MeilisearchModule,
+  NotificationsModule,
+  ServeStaticModule.forRoot({
+    rootPath: join(__dirname, '..', 'ticketbox-client', 'dist'),
+  }),
+];
+
+let serviceModules = [];
+const serviceName = process.env.SERVICE_NAME;
+
+if (serviceName === 'auth') {
+  serviceModules = [AuthModule];
+} else if (serviceName === 'booking') {
+  serviceModules = [BookingModule];
+} else if (serviceName === 'info') {
+  serviceModules = [InfoModule, SearchModule];
+} else {
+  // Monolithic fallback
+  serviceModules = [AuthModule, BookingModule, InfoModule, SearchModule];
+}
+
 @Module({
-  imports: [
-    TypeOrmModule.forRoot(typeOrmConfig),
-    MongooseModule.forRoot(mongoConfig.uri),
-    ScheduleModule.forRoot(),
-    RedisModule,
-    RabbitMQModule,
-    MeilisearchModule,
-    AuthModule,
-    BookingModule,
-    NotificationsModule,
-    SearchModule,
-    InfoModule,
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'ticketbox-client', 'dist'),
-    }),
-  ],
+  imports: [...coreModules, ...serviceModules],
 })
 export class AppModule {}
