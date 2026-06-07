@@ -13,4 +13,7 @@ export class ZoneInventory {
 
   @Column('int')
   availableSlots: number;
+
+  @Column({ type: 'int', default: 0 })
+  price: number;
 }

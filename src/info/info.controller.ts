@@ -5,6 +5,11 @@ import { InfoService } from './info.service';
 export class InfoController {
   constructor(private readonly infoService: InfoService) {}
 
+  @Get('shows')
+  async getAllShows() {
+    return await this.infoService.getAllShows();
+  }
+
   @Get('show/:id')
   async getShowInfo(@Param('id') showId: string) {
     return await this.infoService.getShowInfo(showId);

@@ -3,17 +3,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axiosClient from '../utils/axiosClient';
 
 export const PaymentPage: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState(900); // 15:00
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
+    if (savedExpireAt) {
+      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+    return 900;
+  });
   const [paymentMethod, setPaymentMethod] = useState('momo');
   const navigate = useNavigate();
   const location = useLocation();
 
   const {
     selectedSeats = [],
-    vipCount = 0,
-    normalCount = 0,
+    ticketCounts = {},
     totalPrice = 0,
-    totalTickets = 0
+    totalTickets = 0,
+    showId = '1'
   } = location.state || {};
 
   useEffect(() => {
@@ -39,10 +46,9 @@ export const PaymentPage: React.FC = () => {
     try {
       // Giả lập confirm thanh toán - Kích hoạt Worker Pool RabbitMQ
       await axiosClient.post('/booking/pay', {
-        showId: '1',
+        showId,
         svipSeats: selectedSeats,
-        vipCount,
-        normalCount,
+        ticketCounts,
         totalAmount: finalPrice
       });
       setIsSuccess(true);
@@ -83,9 +89,9 @@ export const PaymentPage: React.FC = () => {
               <h1 className="font-headline-md text-headline-md text-primary font-bold">Liveshow Góc Ban Công: Vệt Nắng</h1>
             </div>
             <div className="flex items-center gap-4">
-              <div className="bg-error-container text-on-error-container px-3 py-1 rounded-lg flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">timer</span>
-                <span className="font-label-md text-label-md tracking-widest font-bold">{m}:{s}</span>
+              <div className="glass-timer flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant" style={{ backdropFilter: 'blur(12px)', background: 'rgba(28, 27, 27, 0.8)' }}>
+                <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>timer</span>
+                <span className="font-label-md text-on-surface">{m}:{s} Remaining</span>
               </div>
             </div>
           </div>
@@ -179,7 +185,6 @@ export const PaymentPage: React.FC = () => {
             <div className="p-6 border-b border-outline-variant flex justify-between items-center">
               <div>
                 <h3 className="font-headline-md text-headline-md text-on-surface">Order Summary</h3>
-                <p className="text-label-md font-label-md text-on-surface-variant">{m}:{s} Remaining</p>
               </div>
               <button onClick={() => navigate('/seat.html')} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
             </div>
@@ -208,35 +213,18 @@ export const PaymentPage: React.FC = () => {
                 </div>
               )}
 
-              {vipCount > 0 && (
-                <div className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
+              {Object.entries(ticketCounts).map(([zone, count]: [string, any]) => count > 0 && (
+                <div key={zone} className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
                   <div className="space-y-1">
                     <span className="font-label-md text-label-md text-on-surface-variant">Loại vé</span>
-                    <p className="font-body-md text-body-md font-bold text-on-surface">VIP</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">2.450.000 đ</p>
+                    <p className="font-body-md text-body-md font-bold text-on-surface">{zone}</p>
                   </div>
                   <div className="text-right space-y-1">
                     <span className="font-label-md text-label-md text-on-surface-variant">Số lượng</span>
-                    <p className="font-body-md text-body-md font-bold text-on-surface">{vipCount < 10 ? `0${vipCount}` : vipCount}</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">{(vipCount * 2450000).toLocaleString('vi-VN')} đ</p>
+                    <p className="font-body-md text-body-md font-bold text-on-surface">{count < 10 ? `0${count}` : count}</p>
                   </div>
                 </div>
-              )}
-
-              {normalCount > 0 && (
-                <div className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
-                  <div className="space-y-1">
-                    <span className="font-label-md text-label-md text-on-surface-variant">Loại vé</span>
-                    <p className="font-body-md text-body-md font-bold text-on-surface">Normal</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">1.850.000 đ</p>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <span className="font-label-md text-label-md text-on-surface-variant">Số lượng</span>
-                    <p className="font-body-md text-body-md font-bold text-on-surface">{normalCount < 10 ? `0${normalCount}` : normalCount}</p>
-                    <p className="font-body-sm text-body-sm text-on-surface-variant">{(normalCount * 1850000).toLocaleString('vi-VN')} đ</p>
-                  </div>
-                </div>
-              )}
+              ))}
 
               <div className="h-px bg-outline-variant border-dashed border-b"></div>
               {/* Total */}
@@ -257,30 +245,7 @@ export const PaymentPage: React.FC = () => {
         </aside>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full mt-margin-desktop bg-surface-container-lowest border-t border-outline-variant">
-        <div className="grid grid-cols-2 md:grid-cols-4 px-6 md:px-margin-desktop py-12 max-w-container-max mx-auto gap-gutter">
-          <div className="col-span-2 md:col-span-1">
-            <a href="/" className="text-headline-md font-headline-md text-primary font-bold mb-4 hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
-            <p className="font-body-sm text-on-surface-variant mb-6">Nền tảng bán vé sự kiện hàng đầu Việt Nam.</p>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-label-md text-on-surface font-bold uppercase tracking-wider mb-2">Khám phá</h4>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Music</a>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Theater</a>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Sports</a>
-          </div>
-          <div className="flex flex-col gap-3">
-            <h4 className="font-label-md text-on-surface font-bold uppercase tracking-wider mb-2">Thông tin</h4>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Workshops</a>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Legal</a>
-            <a className="font-body-sm text-on-surface-variant hover:text-primary underline" href="#">Privacy</a>
-          </div>
-          <div className="col-span-2 md:col-span-1 flex flex-col items-end justify-end">
-            <p className="font-body-sm text-on-surface-variant">© 2024 Ticketbox. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+
     </div>
   );
 };

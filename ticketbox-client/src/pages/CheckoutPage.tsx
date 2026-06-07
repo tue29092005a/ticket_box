@@ -2,7 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export const CheckoutPage: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState(939); // 15:39
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const {
+    selectedSeats = [],
+    ticketCounts = {},
+    totalPrice = 0,
+    totalTickets = 0,
+    timeLeft: initialTimeLeft = 900
+  } = location.state || {};
+
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
+    if (savedExpireAt) {
+      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
+      return remaining > 0 ? remaining : 0;
+    }
+    return initialTimeLeft;
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -18,16 +36,8 @@ export const CheckoutPage: React.FC = () => {
   };
 
   const { m, s } = formatTime(timeLeft);
-  const location = useLocation();
-  const navigate = useNavigate();
 
-  const {
-    selectedSeats = [],
-    vipCount = 0,
-    normalCount = 0,
-    totalPrice = 0,
-    totalTickets = 0
-  } = location.state || {};
+
 
   return (
     <div className="bg-black text-on-surface font-body-md overflow-x-hidden min-h-screen flex flex-col">
@@ -41,7 +51,7 @@ export const CheckoutPage: React.FC = () => {
               <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">My Tickets</a>
               <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">Account</a>
             </nav>
-            <button className="material-symbols-outlined hover:text-white transition-colors">language</button>
+
           </div>
         </div>
       </header>
@@ -68,13 +78,9 @@ export const CheckoutPage: React.FC = () => {
                 </div>
               </div>
               {/* Timer Widget */}
-              <div className="bg-error-container/20 border border-error p-3 rounded-lg flex flex-col items-center min-w-[140px]">
-                <span className="text-[10px] font-label-md text-error uppercase tracking-widest mb-1">Time Remaining</span>
-                <div className="flex items-center gap-2">
-                  <div className="bg-error text-white font-bold text-xl px-2 py-1 rounded">{m}</div>
-                  <span className="text-error font-bold">:</span>
-                  <div className="bg-error text-white font-bold text-xl px-2 py-1 rounded">{s}</div>
-                </div>
+              <div className="glass-timer flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant" style={{ backdropFilter: 'blur(12px)', background: 'rgba(28, 27, 27, 0.8)' }}>
+                <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>timer</span>
+                <span className="font-label-md text-on-surface">{m}:{s} Remaining</span>
               </div>
             </div>
           </div>
@@ -82,7 +88,7 @@ export const CheckoutPage: React.FC = () => {
 
         {/* Content Area */}
         <div className="max-w-container-max mx-auto px-6 md:px-margin-desktop py-12">
-          <h2 className="font-headline-md text-headline-md text-primary-container mb-8 uppercase tracking-wider">Thông tin cá nhan</h2>
+          <h2 className="font-headline-md text-headline-md text-primary-container mb-8 uppercase tracking-wider">Thông tin cá nhân</h2>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
             {/* Main Form Container */}
             <div className="lg:col-span-8 bg-surface-container-high rounded-xl p-8 shadow-lg border border-outline-variant/30">
@@ -116,7 +122,7 @@ export const CheckoutPage: React.FC = () => {
                 </div>
               </form>
             </div>
-            
+
             {/* Sidebar: Order Summary */}
             <aside className="lg:col-span-4 space-y-gutter">
               <div className="bg-surface-container-high rounded-xl border border-outline-variant overflow-hidden shadow-lg sticky top-52">
@@ -153,35 +159,18 @@ export const CheckoutPage: React.FC = () => {
                     </div>
                   )}
 
-                  {vipCount > 0 && (
-                    <div className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
+                  {Object.entries(ticketCounts).map(([zone, count]: [string, any]) => count > 0 && (
+                    <div key={zone} className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
                       <div className="space-y-1">
                         <span className="font-label-md text-label-md text-on-surface-variant">Loại vé</span>
-                        <p className="font-body-md text-body-md font-bold text-on-surface">VIP</p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">2.450.000 đ</p>
+                        <p className="font-body-md text-body-md font-bold text-on-surface">{zone}</p>
                       </div>
                       <div className="text-right space-y-1">
                         <span className="font-label-md text-label-md text-on-surface-variant">Số lượng</span>
-                        <p className="font-body-md text-body-md font-bold text-on-surface">{vipCount < 10 ? `0${vipCount}` : vipCount}</p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">{(vipCount * 2450000).toLocaleString('vi-VN')} đ</p>
+                        <p className="font-body-md text-body-md font-bold text-on-surface">{count < 10 ? `0${count}` : count}</p>
                       </div>
                     </div>
-                  )}
-
-                  {normalCount > 0 && (
-                    <div className="flex justify-between items-start pt-2 border-t border-outline-variant/30">
-                      <div className="space-y-1">
-                        <span className="font-label-md text-label-md text-on-surface-variant">Loại vé</span>
-                        <p className="font-body-md text-body-md font-bold text-on-surface">Normal</p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">1.850.000 đ</p>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <span className="font-label-md text-label-md text-on-surface-variant">Số lượng</span>
-                        <p className="font-body-md text-body-md font-bold text-on-surface">{normalCount < 10 ? `0${normalCount}` : normalCount}</p>
-                        <p className="font-body-sm text-body-sm text-on-surface-variant">{(normalCount * 1850000).toLocaleString('vi-VN')} đ</p>
-                      </div>
-                    </div>
-                  )}
+                  ))}
 
                   <div className="h-px bg-outline-variant border-dashed border-b"></div>
                   {/* Total */}

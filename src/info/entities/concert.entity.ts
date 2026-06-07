@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity()
-export class Show {
+@Entity('concerts')
+export class Concert {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -12,14 +12,11 @@ export class Show {
   name: string;
 
   @Column({ type: 'timestamp' })
-  timeStart: Date;
+  performanceDate: Date;
 
-  @Column({ type: 'timestamp' })
-  timeEnd: Date;
-
-  @Column()
+  @Column({ nullable: true })
   location: string;
 
-  @Column()
+  @Column({ default: 'UPCOMING' })
   status: string;
 }

@@ -5,9 +5,10 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  message?: string;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess, message }) => {
   const { login, register } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
@@ -59,7 +60,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
             {isLoginMode ? 'Đăng Nhập' : 'Đăng Ký'}
           </h2>
           <p className="text-gray-400 text-sm">
-            {isLoginMode ? 'Vui lòng đăng nhập để tiếp tục chọn ghế' : 'Tạo tài khoản mới để trải nghiệm ticketbox'}
+            {isLoginMode ? (message || 'Đăng nhập vào tài khoản của bạn') : 'Tạo tài khoản mới để trải nghiệm ticketbox'}
           </p>
         </div>
 

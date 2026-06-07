@@ -40,16 +40,16 @@ export class BookingController {
 
   @UseGuards(JwtAuthGuard)
   @Post('hold')
-  async bookHold(@Req() req, @Body() body: { showId: string; seats: string[]; vipCount: number; normalCount: number }) {
+  async bookHold(@Req() req, @Body() body: { showId: string; seats: string[]; ticketCounts: Record<string, number> }) {
     const userId = req.user.userId;
-    for (const seat of body.seats) {
+    for (const seat of body.seats || []) {
       await this.bookingService.bookSVIPTicket(body.showId, userId, seat);
     }
-    if (body.vipCount > 0) {
-      await this.bookingService.bookGATicket(body.showId, userId, body.vipCount, 'VIP');
-    }
-    if (body.normalCount > 0) {
-      await this.bookingService.bookGATicket(body.showId, userId, body.normalCount, 'Normal');
+    const counts = body.ticketCounts || {};
+    for (const [zone, count] of Object.entries(counts)) {
+      if (count > 0) {
+        await this.bookingService.bookGATicket(body.showId, userId, count, zone);
+      }
     }
     return { success: true };
   }

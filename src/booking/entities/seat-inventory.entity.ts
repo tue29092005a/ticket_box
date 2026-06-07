@@ -11,6 +11,9 @@ export class SeatInventory {
   @Column({ default: 'AVAILABLE' })
   status: string; // AVAILABLE | RESERVED | BOOKED
 
+  @Column({ nullable: true, default: 'SVIP' })
+  zone: string;
+
   @Column({ nullable: true })
   reservedBy: string;
 

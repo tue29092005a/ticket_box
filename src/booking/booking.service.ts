@@ -33,7 +33,7 @@ export class BookingService implements OnModuleInit {
       const cols = 20; // 20 columns = 200 seats
       for (const row of rows) {
         for (let i = 1; i <= cols; i++) {
-          seats.push({ seatNo: `${row}-${i}`, showId: '1', status: 'AVAILABLE' });
+          seats.push({ seatNo: `${row}-${i}`, showId: '1', status: 'AVAILABLE', zone: 'SVIP' });
         }
       }
       await this.seatInventoryRepo.insert(seats);
@@ -62,14 +62,15 @@ export class BookingService implements OnModuleInit {
     return seats;
   }
 
-  // Lấy lượng vé còn lại của VIP và Normal
+  // Lấy lượng vé còn lại của tất cả các zone
   async getInventory(showId: string) {
     const inventoryKey = `show:${showId}:inventory`;
     const inventory = await this.redis.hgetall(inventoryKey);
-    return {
-      VIP: inventory['VIP'] ? parseInt(inventory['VIP'], 10) : 75,
-      Normal: inventory['Normal'] ? parseInt(inventory['Normal'], 10) : 100,
-    };
+    const parsed: Record<string, number> = {};
+    for (const [key, val] of Object.entries(inventory)) {
+      parsed[key] = parseInt(val, 10);
+    }
+    return parsed;
   }
 
   updateLocalSeatCache(payload: any) {
@@ -94,13 +95,14 @@ export class BookingService implements OnModuleInit {
     // Khởi tạo quota ban đầu nếu chưa tồn tại trong Redis
     const exists = await this.redis.hexists(inventoryKey, zoneType);
     if (!exists) {
-      const initialQuota = zoneType === 'VIP' ? 75 : 100;
-      await this.redis.hsetnx(inventoryKey, zoneType, initialQuota);
+      const zoneInfo = await this.zoneInventoryRepo.findOne({ where: { zone: zoneType, showId } });
+      if (!zoneInfo) throw new BadRequestException(`Zone ${zoneType} không tồn tại.`);
+      await this.redis.hsetnx(inventoryKey, zoneType, zoneInfo.availableSlots);
     }
 
     // Kiểm tra giới hạn số lượng vé mỗi tài khoản (Per-User Quota)
     const userQuotaKey = `user:${userId}:concert:${showId}:zone:${zoneType}`;
-    const maxQuota = zoneType === 'VIP' ? 4 : 4; // VIP max 4, Normal max 4
+    const maxQuota = 4; // Giới hạn chung là 4 vé cho mỗi zone GA
     
     const currentUserQuota = await this.redis.incrby(userQuotaKey, quantity);
     if (currentUserQuota > maxQuota) {
@@ -196,7 +198,7 @@ export class BookingService implements OnModuleInit {
 
   // API Mô phỏng thanh toán
   async payTickets(showId: string, userId: string, payload: any) {
-    const { svipSeats, vipCount, normalCount, totalAmount } = payload;
+    const { svipSeats, ticketCounts = {}, totalAmount } = payload;
     
     const tickets = [];
 
@@ -230,40 +232,29 @@ export class BookingService implements OnModuleInit {
       }
     }
 
-    // Chốt vé thường/VIP - Synchronous DB Chốt chặn
-    if (vipCount > 0) {
-      // Trừ thẳng Database để chặn Oversell
-      const dbUpdate = await this.zoneInventoryRepo.createQueryBuilder()
-        .update(ZoneInventory)
-        .set({ availableSlots: () => `availableSlots - ${vipCount}` })
-        .where('zone = :zone AND showId = :showId AND availableSlots >= :count', {
-          zone: 'VIP', showId, count: vipCount
-        })
-        .execute();
+    // Chốt vé các Zone linh động
+    for (const [zone, count] of Object.entries(ticketCounts)) {
+      const quantity = count as number;
+      if (quantity > 0) {
+        // Lấy giá từ DB để push vào mảng tickets, thay vì hardcode
+        const zoneInfo = await this.zoneInventoryRepo.findOne({ where: { zone, showId } });
+        const price = zoneInfo ? zoneInfo.price : 0;
 
-      if (dbUpdate.affected === 0) {
-        throw new BadRequestException('Rất tiếc, vé VIP đã được bán hết do biến động hệ thống.');
+        const dbUpdate = await this.zoneInventoryRepo.createQueryBuilder()
+          .update(ZoneInventory)
+          .set({ availableSlots: () => `availableSlots - ${quantity}` })
+          .where('zone = :zone AND showId = :showId AND availableSlots >= :count', {
+            zone, showId, count: quantity
+          })
+          .execute();
+
+        if (dbUpdate.affected === 0) {
+          throw new BadRequestException(`Rất tiếc, vé ${zone} đã được bán hết do biến động hệ thống.`);
+        }
+
+        await this.redis.set(`user:${userId}:concert:${showId}:zone:${zone}:paid_qty`, quantity.toString(), 'EX', 86400);
+        for (let i = 0; i < quantity; i++) tickets.push({ zone, price });
       }
-
-      await this.redis.set(`user:${userId}:concert:${showId}:zone:VIP:paid_qty`, vipCount.toString(), 'EX', 86400);
-      for (let i = 0; i < vipCount; i++) tickets.push({ zone: 'VIP', price: 2450000 });
-    }
-    
-    if (normalCount > 0) {
-      const dbUpdate = await this.zoneInventoryRepo.createQueryBuilder()
-        .update(ZoneInventory)
-        .set({ availableSlots: () => `availableSlots - ${normalCount}` })
-        .where('zone = :zone AND showId = :showId AND availableSlots >= :count', {
-          zone: 'Normal', showId, count: normalCount
-        })
-        .execute();
-
-      if (dbUpdate.affected === 0) {
-        throw new BadRequestException('Rất tiếc, vé Normal đã được bán hết do biến động hệ thống.');
-      }
-
-      await this.redis.set(`user:${userId}:concert:${showId}:zone:Normal:paid_qty`, normalCount.toString(), 'EX', 86400);
-      for (let i = 0; i < normalCount; i++) tickets.push({ zone: 'Normal', price: 1850000 });
     }
 
     // Gửi event để Worker lưu Database

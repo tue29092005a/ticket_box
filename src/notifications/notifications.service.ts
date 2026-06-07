@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { Invoice } from '../booking/entities/invoice.entity';
 import { Ticket } from '../booking/entities/ticket.entity';
 import { SeatInventory } from '../booking/entities/seat-inventory.entity';
+import { ZoneInventory } from '../booking/entities/zone-inventory.entity';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -20,6 +21,7 @@ export class NotificationsService implements OnModuleInit {
     @InjectRepository(Invoice) private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(Ticket) private readonly ticketRepository: Repository<Ticket>,
     @InjectRepository(SeatInventory) private readonly seatInventoryRepo: Repository<SeatInventory>,
+    @InjectRepository(ZoneInventory) private readonly zoneInventoryRepo: Repository<ZoneInventory>,
   ) {}
 
   onModuleInit() {
@@ -40,53 +42,38 @@ export class NotificationsService implements OnModuleInit {
       const pipeline = this.redis.pipeline();
       
       let svipCount = 0;
-      let vipCount = 0;
-      let normalCount = 0;
-      const userPaidQty: Record<string, { VIP: number, Normal: number, SVIP: number }> = {};
+      let gaCount = 0;
+      const userPaidQty: Record<string, number> = {};
 
       for (const ticket of paidTickets) {
-        const key = `${ticket.invoice.userId}:${ticket.showId}`;
-        if (!userPaidQty[key]) userPaidQty[key] = { VIP: 0, Normal: 0, SVIP: 0 };
+        const key = `user:${ticket.invoice.userId}:concert:${ticket.showId}:zone:${ticket.zone}`;
+        userPaidQty[key] = (userPaidQty[key] || 0) + 1;
 
         if (ticket.zone === 'SVIP' && ticket.seatNo) {
           // Khôi phục ghế SVIP với trạng thái PAID
           pipeline.hset(`show:${ticket.showId}:svip_seats`, ticket.seatNo, `${ticket.invoice.userId}:PAID`);
-          userPaidQty[key].SVIP++;
           svipCount++;
-        } else if (ticket.zone === 'VIP') {
-          vipCount++;
-          userPaidQty[key].VIP++;
-        } else if (ticket.zone === 'Normal') {
-          normalCount++;
-          userPaidQty[key].Normal++;
+        } else {
+          gaCount++;
         }
       }
 
-      // Khôi phục số lượng vé VIP/Normal đã thanh toán của user (để chặn rollback) và khôi phục Quota
+      // Khôi phục số lượng vé đã thanh toán của user (để chặn rollback) và khôi phục Quota
       for (const [key, qty] of Object.entries(userPaidQty)) {
-        const [userId, showId] = key.split(':');
-        if (qty.VIP > 0) {
-          pipeline.set(`user:${userId}:concert:${showId}:zone:VIP:paid_qty`, qty.VIP.toString(), 'EX', 86400);
-          pipeline.set(`user:${userId}:concert:${showId}:zone:VIP`, qty.VIP.toString()); // Khôi phục Quota mua VIP
+        if (!key.endsWith(':svip')) {
+          pipeline.set(`${key}:paid_qty`, qty.toString(), 'EX', 86400);
         }
-        if (qty.Normal > 0) {
-          pipeline.set(`user:${userId}:concert:${showId}:zone:Normal:paid_qty`, qty.Normal.toString(), 'EX', 86400);
-          pipeline.set(`user:${userId}:concert:${showId}:zone:Normal`, qty.Normal.toString()); // Khôi phục Quota mua Normal
-        }
-        if (qty.SVIP > 0) {
-          pipeline.set(`user:${userId}:concert:${showId}:zone:svip`, qty.SVIP.toString()); // Khôi phục Quota mua SVIP
-        }
+        pipeline.set(key, qty.toString()); // Khôi phục Quota mua
       }
 
-      // Khôi phục Inventory (Tổng số vé còn lại) 
-      // Do bài toán demo mặc định show 1 có 75 VIP, 100 Normal
-      const vipRemaining = Math.max(0, 75 - vipCount);
-      const normalRemaining = Math.max(0, 100 - normalCount);
-      pipeline.hset(`show:1:inventory`, 'VIP', vipRemaining.toString());
-      pipeline.hset(`show:1:inventory`, 'Normal', normalRemaining.toString());
+      // Khôi phục Inventory (Tổng số vé còn lại) từ ZoneInventory
+      const zones = await this.zoneInventoryRepo.find();
+      for (const z of zones) {
+        pipeline.hset(`show:${z.showId}:inventory`, z.zone, z.availableSlots.toString());
+      }
 
       await pipeline.exec();
-      this.logger.log(`Đồng bộ thành công: ${svipCount} ghế SVIP, ${vipCount} vé VIP, ${normalCount} vé Normal. Sẵn sàng đón traffic!`);
+      this.logger.log(`Đồng bộ thành công: ${svipCount} ghế SVIP, ${gaCount} vé thường. Sẵn sàng đón traffic!`);
     } catch (error) {
       this.logger.error(`Lỗi khi đồng bộ Cache Warm-up: ${error.message}`);
     }
