@@ -15,6 +15,25 @@ export const RABBITMQ_CHANNEL = 'RABBITMQ_CHANNEL';
         await channel.assertQueue('notification_queue', { durable: true });
         await channel.assertQueue('payment_success_queue', { durable: true });
         
+        // --- New Queues ---
+        await channel.assertQueue('payment_webhook_queue', { durable: true });
+        await channel.assertQueue('payment_confirmed_queue', { durable: true });
+        await channel.assertQueue('internal_capture_queue', { durable: true });
+
+        // Email Notification Queue with DLX
+        const emailDlxExchange = 'email_dlx';
+        await channel.assertExchange(emailDlxExchange, 'direct', { durable: true });
+        await channel.assertQueue('email_notification_dlq', { durable: true });
+        await channel.bindQueue('email_notification_dlq', emailDlxExchange, 'email_dead');
+
+        await channel.assertQueue('email_notification_queue', { 
+          durable: true,
+          arguments: {
+            'x-dead-letter-exchange': emailDlxExchange,
+            'x-dead-letter-routing-key': 'email_dead',
+          }
+        });
+
         // Cấu hình DLX (Dead Letter Exchange) để giả lập Delayed Messaging cho Timeout Rollback (10 phút)
         const dlxExchange = 'hold_timeout_dlx';
         await channel.assertExchange(dlxExchange, 'direct', { durable: true });

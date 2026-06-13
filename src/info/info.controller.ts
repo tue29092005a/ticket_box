@@ -11,7 +11,7 @@ export class InfoController {
   }
 
   @Get('show/:id')
-  async getShowInfo(@Param('id') showId: string) {
-    return await this.infoService.getShowInfo(showId);
+  async getShowInfo(@Param('id') concert_id: string) {
+    return await this.infoService.getShowInfo(Number(concert_id));
   }
 }

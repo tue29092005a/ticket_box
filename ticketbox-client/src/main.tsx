@@ -8,6 +8,7 @@ import { SeatMapPage } from './pages/SeatMapPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { HomePage } from './pages/HomePage';
+import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
 import { AuthProvider } from './context/AuthContext';
 
 const container = document.getElementById('root');
@@ -23,6 +24,7 @@ if (container) {
             <Route path="/seat.html" element={<SeatMapPage />} />
             <Route path="/checkout.html" element={<CheckoutPage />} />
             <Route path="/payment.html" element={<PaymentPage />} />
+            <Route path="/payment-success.html" element={<PaymentSuccessPage />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -24,10 +25,54 @@ async function bootstrap() {
     console.log('Đã tạo Admin User trong Postgres.');
   }
 
+  const { Concert } = require('../info/entities/concert.entity');
+  const concertRepository = app.get(getRepositoryToken(Concert));
+  let concert = await concertRepository.findOne({ where: { id: 1 } });
+  if (!concert) {
+    concert = concertRepository.create({
+      id: 1,
+      name: 'Anh Trai Say Hi - Live Concert',
+      performanceDate: new Date('2026-10-10'),
+      location: 'Hà Nội',
+      status: 'UPCOMING'
+    });
+    await concertRepository.save(concert);
+    console.log('Đã tạo Concert ID 1 trong Postgres.');
+  }
+
+  // Khởi tạo cả inventory và seat cho DB nếu chúng chưa có vì ta đã skip ở onModuleInit
+  const { SeatInventory } = require('../booking/entities/seat-inventory.entity');
+  const { ZoneInventory } = require('../booking/entities/zone-inventory.entity');
+  const seatInventoryRepo = app.get(getRepositoryToken(SeatInventory));
+  const zoneInventoryRepo = app.get(getRepositoryToken(ZoneInventory));
+
+  const seatCount = await seatInventoryRepo.count();
+  if (seatCount === 0) {
+    const seats = [];
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    const cols = 20;
+    for (const row of rows) {
+      for (let i = 1; i <= cols; i++) {
+        seats.push({ seatNo: `${row}-${i}`, concert_id: 1, status: 'AVAILABLE', zone: 'SVIP' });
+      }
+    }
+    await seatInventoryRepo.insert(seats);
+    console.log('Đã Seed 200 SVIP seats vào Postgres.');
+  }
+
+  const zoneCount = await zoneInventoryRepo.count();
+  if (zoneCount === 0) {
+    await zoneInventoryRepo.insert([
+      { zone: 'VIP', concert_id: 1, totalCapacity: 75, availableSlots: 75 },
+      { zone: 'Normal', concert_id: 1, totalCapacity: 100, availableSlots: 100 },
+    ]);
+    console.log('Đã Seed 75 VIP và 100 Normal zones vào Postgres.');
+  }
+
   // 2. Redis Seed: SVIP Seat Matrix và GA Inventory
-  const showId = '1';
-  const gaKey = `show:${showId}:inventory`;
-  const svipHashKey = `show:${showId}:svip_seats`;
+  const concert_id = 1;
+  const gaKey = `concert:${concert_id}:inventory`;
+  const svipHashKey = `concert:${concert_id}:svip_seats`;
 
   // Xoá dữ liệu cũ
   await redisClient.del(gaKey);

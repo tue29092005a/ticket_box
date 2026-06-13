@@ -8,33 +8,31 @@ interface SSEventPayload {
   type?: string;
 }
 
-export const useTicketEvents = (showId: string, onEvent?: (payload: SSEventPayload) => void) => {
-  const [lastEvent, setLastEvent] = useState<SSEventPayload | null>(null);
+export const useTicketEvents = (userId: string, onEvent?: (payload: SSEventPayload) => void) => {
+  const [events, setEvents] = useState<SSEventPayload[]>([]);
 
   useEffect(() => {
-    // Backend đẩy SSE ở endpoint /booking/sse/:userId
-    // Ở đây ta fake userId là '1' (hoặc showId để demo)
-    const eventSource = new EventSource(`http://localhost:3000/booking/sse/${showId}`);
+    // Kết nối tới SSE endpoint
+    const eventSource = new EventSource(`http://localhost:3000/booking/sse/${userId}`);
 
     eventSource.onmessage = (event) => {
-      try {
-        const payload: SSEventPayload = JSON.parse(event.data);
-        setLastEvent(payload);
-        if (onEvent) onEvent(payload);
-      } catch (err) {
-        console.error('Error parsing SSE data', err);
+      const parsedData: SSEventPayload = JSON.parse(event.data);
+      setEvents((prev) => [...prev, parsedData]);
+      
+      if (onEvent) {
+        onEvent(parsedData);
       }
     };
 
     eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      // Trình duyệt sẽ tự động reconnect (Fallback SSE)
+      console.error('SSE Error:', error);
+      eventSource.close();
     };
 
     return () => {
       eventSource.close();
     };
-  }, [showId]);
+  }, [userId]);
 
-  return { lastEvent };
+  return { lastEvent: events[events.length - 1] || null };
 };

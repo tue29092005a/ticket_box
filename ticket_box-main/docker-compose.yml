@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ticketbox-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: ticketbox
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ticketbox_db
+    networks:
+      - ticketbox-network
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.7
+    container_name: ticketbox-meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=ticketbox_master_key
+      - MEILI_ENV=development
+    networks:
+      - ticketbox-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ticketbox-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - ticketbox-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: ticketbox-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - ticketbox-network
+
+networks:
+  ticketbox-network:
+    driver: bridge

@@ -13,42 +13,42 @@ export class BookingController {
   ) {}
 
   @Get('show/:id/seats')
-  async getSeatStatus(@Param('id') id: string) {
-    return this.bookingService.getSeatStatus(id);
+  async getSeatStatus(@Param('id') concert_id: string) {
+    return this.bookingService.getSeatStatus(Number(concert_id));
   }
 
   @Get('show/:id/inventory')
-  async getInventory(@Param('id') id: string) {
-    return this.bookingService.getInventory(id);
+  async getInventory(@Param('id') concert_id: string) {
+    return this.bookingService.getInventory(Number(concert_id));
   }
 
 
   @UseGuards(JwtAuthGuard)
   @Post('ga')
-  async bookGA(@Req() req, @Body() body: { showId: string; quantity: number; zoneType?: string }) {
+  async bookGA(@Req() req, @Body() body: { concert_id: number; quantity: number; zoneType?: string }) {
     const zoneType = body.zoneType || 'Normal';
     const userId = req.user.userId;
-    return this.bookingService.bookGATicket(body.showId, userId, body.quantity, zoneType);
+    return this.bookingService.bookGATicket(body.concert_id, userId, body.quantity, zoneType);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('svip')
-  async bookSVIP(@Req() req, @Body() body: { showId: string; seatNo: string }) {
+  async bookSVIP(@Req() req, @Body() body: { concert_id: number; seatNo: string }) {
     const userId = req.user.userId;
-    return this.bookingService.bookSVIPTicket(body.showId, userId, body.seatNo);
+    return this.bookingService.bookSVIPTicket(body.concert_id, userId, body.seatNo);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('hold')
-  async bookHold(@Req() req, @Body() body: { showId: string; seats: string[]; ticketCounts: Record<string, number> }) {
+  async bookHold(@Req() req, @Body() body: { concert_id: number; seats: string[]; ticketCounts: Record<string, number> }) {
     const userId = req.user.userId;
     for (const seat of body.seats || []) {
-      await this.bookingService.bookSVIPTicket(body.showId, userId, seat);
+      await this.bookingService.bookSVIPTicket(body.concert_id, userId, seat);
     }
     const counts = body.ticketCounts || {};
     for (const [zone, count] of Object.entries(counts)) {
       if (count > 0) {
-        await this.bookingService.bookGATicket(body.showId, userId, count, zone);
+        await this.bookingService.bookGATicket(body.concert_id, userId, count, zone);
       }
     }
     return { success: true };
@@ -57,7 +57,7 @@ export class BookingController {
   @UseGuards(JwtAuthGuard)
   @Post('pay')
   async payTickets(@Body() body: any, @Req() req) {
-    return this.bookingService.payTickets(body.showId, req.user.userId, body);
+    return this.bookingService.payTickets(body.concert_id, req.user.userId, body);
   }
 
   @Sse('sse/:userId')

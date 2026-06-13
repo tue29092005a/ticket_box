@@ -10,7 +10,7 @@ export const CheckoutPage: React.FC = () => {
     ticketCounts = {},
     totalPrice = 0,
     totalTickets = 0,
-    timeLeft: initialTimeLeft = 900
+    timeLeft: initialTimeLeft = 300
   } = location.state || {};
 
   const [timeLeft, setTimeLeft] = useState<number>(() => {
@@ -180,7 +180,23 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <p className="text-[10px] text-on-surface-variant text-center leading-relaxed">Vui lòng trả lời tất cả các câu hỏi để tiếp tục</p>
                   {/* CTA */}
-                  <button onClick={() => navigate('/payment.html', { state: location.state })} type="button" className="w-full bg-primary-container text-on-primary-container py-4 rounded-lg font-headline-md text-headline-md flex justify-center items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-md">
+                  <button 
+                    onClick={() => {
+                      let idemKey = sessionStorage.getItem('idempotency_key');
+                      if (!idemKey) {
+                        idemKey = crypto.randomUUID();
+                        sessionStorage.setItem('idempotency_key', idemKey);
+                      }
+                      navigate('/payment.html', { 
+                        state: { 
+                          ...location.state, 
+                          idempotencyKey: idemKey 
+                        } 
+                      });
+                    }} 
+                    type="button" 
+                    className="w-full bg-primary-container text-on-primary-container py-4 rounded-lg font-headline-md text-headline-md flex justify-center items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-md"
+                  >
                     Tiếp tục
                     <span className="material-symbols-outlined">chevron_right</span>
                   </button>

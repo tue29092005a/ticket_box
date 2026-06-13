@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketBox Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">TicketBox</div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search tickets (typeahead)..." autocomplete="off" />
+                <div id="searchSuggestions" class="suggestions-box hidden"></div>
+            </div>
+            <div class="user-controls">
+                <button id="loginBtn" class="btn primary">Login</button>
+                <div id="userInfo" class="hidden">
+                    <span id="usernameDisplay"></span>
+                    <button id="logoutBtn" class="btn secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="grid-layout">
+                <!-- Left Column -->
+                <div class="left-column">
+                    <!-- Seat Map Section -->
+                    <section class="card seat-map-card">
+                        <header class="card-header">
+                            <h2>Live Seat Map</h2>
+                            <div class="legend">
+                                <span class="legend-item"><span class="color-box available"></span> Available</span>
+                                <span class="legend-item"><span class="color-box held"></span> Held (10m)</span>
+                                <span class="legend-item"><span class="color-box sold"></span> Sold</span>
+                            </div>
+                        </header>
+                        <div class="card-body">
+                            <div class="seat-zone">
+                                <h3>SVIP Zone</h3>
+                                <div id="svipSeats" class="seat-grid svip"></div>
+                            </div>
+                            <div class="seat-zone">
+                                <h3>General Admission</h3>
+                                <div id="gaSeats" class="seat-grid ga"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column -->
+                <div class="right-column">
+                    <!-- Auth Logs Section -->
+                    <section class="card auth-log-card">
+                        <header class="card-header">
+                            <h2>Security & Token Logs</h2>
+                            <span class="badge">Grace Period Active</span>
+                        </header>
+                        <div class="card-body console-like" id="authLogs">
+                            <div class="log-entry system">System initialized. Waiting for authentication...</div>
+                        </div>
+                        <div class="card-actions">
+                            <button id="simulateDuplicateRefreshBtn" class="btn secondary small">Simulate Duplicate Refresh</button>
+                        </div>
+                    </section>
+
+                    <!-- Virtual Inbox Section -->
+                    <section class="card inbox-card">
+                        <header class="card-header">
+                            <h2>Virtual Inbox (QR Codes)</h2>
+                            <div class="pulse-indicator"></div>
+                        </header>
+                        <div class="card-body">
+                            <div id="virtualInbox" class="inbox-list">
+                                <div class="empty-state">No tickets received yet.</div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="loginModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Login to TicketBox</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required value="user1" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required value="password" />
+                </div>
+                <button type="submit" class="btn primary full-width">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/seatmap.js"></script>
+    <script src="js/inbox.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

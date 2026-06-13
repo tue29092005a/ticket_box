@@ -2,14 +2,6 @@ import { Injectable, OnModuleInit, Inject, Logger } from '@nestjs/common';
 import * as amqp from 'amqplib';
 import { RABBITMQ_CHANNEL } from '../config/rabbitmq.config';
 import * as QRCode from 'qrcode';
-import Redis from 'ioredis';
-import { REDIS_CLIENT } from '../config/redis.config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Invoice } from '../booking/entities/invoice.entity';
-import { Ticket } from '../booking/entities/ticket.entity';
-import { SeatInventory } from '../booking/entities/seat-inventory.entity';
-import { ZoneInventory } from '../booking/entities/zone-inventory.entity';
 
 @Injectable()
 export class NotificationsService implements OnModuleInit {
@@ -17,66 +9,10 @@ export class NotificationsService implements OnModuleInit {
 
   constructor(
     @Inject(RABBITMQ_CHANNEL) private readonly rabbitChannel: amqp.Channel,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
-    @InjectRepository(Invoice) private readonly invoiceRepository: Repository<Invoice>,
-    @InjectRepository(Ticket) private readonly ticketRepository: Repository<Ticket>,
-    @InjectRepository(SeatInventory) private readonly seatInventoryRepo: Repository<SeatInventory>,
-    @InjectRepository(ZoneInventory) private readonly zoneInventoryRepo: Repository<ZoneInventory>,
   ) {}
 
   onModuleInit() {
     this.startWorkerPool();
-    this.startRollbackWorker();
-    this.startDatabaseSyncWorker();
-    this.warmupRedisFromDB();
-  }
-
-  // Đồng bộ ngược từ PostgreSQL lên Redis (Cache Warm-up)
-  private async warmupRedisFromDB() {
-    this.logger.log('Bắt đầu đồng bộ dữ liệu từ PostgreSQL lên Redis (Cache Warm-up)...');
-    try {
-      // Lấy tất cả các vé từ DB kèm thông tin hóa đơn
-      const tickets = await this.ticketRepository.find({ relations: ['invoice'] });
-      const paidTickets = tickets.filter(t => t.invoice && t.invoice.status === 'PAID');
-      
-      const pipeline = this.redis.pipeline();
-      
-      let svipCount = 0;
-      let gaCount = 0;
-      const userPaidQty: Record<string, number> = {};
-
-      for (const ticket of paidTickets) {
-        const key = `user:${ticket.invoice.userId}:concert:${ticket.showId}:zone:${ticket.zone}`;
-        userPaidQty[key] = (userPaidQty[key] || 0) + 1;
-
-        if (ticket.zone === 'SVIP' && ticket.seatNo) {
-          // Khôi phục ghế SVIP với trạng thái PAID
-          pipeline.hset(`show:${ticket.showId}:svip_seats`, ticket.seatNo, `${ticket.invoice.userId}:PAID`);
-          svipCount++;
-        } else {
-          gaCount++;
-        }
-      }
-
-      // Khôi phục số lượng vé đã thanh toán của user (để chặn rollback) và khôi phục Quota
-      for (const [key, qty] of Object.entries(userPaidQty)) {
-        if (!key.endsWith(':svip')) {
-          pipeline.set(`${key}:paid_qty`, qty.toString(), 'EX', 86400);
-        }
-        pipeline.set(key, qty.toString()); // Khôi phục Quota mua
-      }
-
-      // Khôi phục Inventory (Tổng số vé còn lại) từ ZoneInventory
-      const zones = await this.zoneInventoryRepo.find();
-      for (const z of zones) {
-        pipeline.hset(`show:${z.showId}:inventory`, z.zone, z.availableSlots.toString());
-      }
-
-      await pipeline.exec();
-      this.logger.log(`Đồng bộ thành công: ${svipCount} ghế SVIP, ${gaCount} vé thường. Sẵn sàng đón traffic!`);
-    } catch (error) {
-      this.logger.error(`Lỗi khi đồng bộ Cache Warm-up: ${error.message}`);
-    }
   }
 
   // Worker Pooling: Khởi tạo 10 Consumer chạy song song cho hàng đợi notification
@@ -117,108 +53,5 @@ export class NotificationsService implements OnModuleInit {
     // Luồng sinh e-ticket tức thì cho từng đơn hàng (Giao dịch thành công)
     const qrDataUrl = await QRCode.toDataURL(JSON.stringify(data));
     this.logger.log(`[Worker ${workerId}] Đã tạo mã QR và gửi email xác nhận cho User: ${data.userId}`);
-  }
-
-  // Worker xử lý các message hết hạn 10 phút (từ hold_timeout_queue)
-  private startRollbackWorker() {
-    this.rabbitChannel.consume('hold_timeout_queue', async (msg) => {
-      if (msg !== null) {
-        try {
-          const data = JSON.parse(msg.content.toString());
-          
-          if (data.action === 'rollback_quantity') {
-            const paidQtyStr = await this.redis.get(`user:${data.userId}:concert:${data.showId}:zone:${data.type}:paid_qty`);
-            if (paidQtyStr && parseInt(paidQtyStr, 10) >= data.quantity) {
-              this.logger.log(`[Rollback] Bỏ qua Rollback vé ${data.type} vì User ${data.userId} đã thanh toán.`);
-            } else {
-              this.logger.log(`[Rollback] User ${data.userId} đã quá 10 phút không thanh toán ${data.quantity} vé ${data.type}. Đang hoàn lại kho...`);
-              // Hoàn lại số lượng vé VIP/Normal vào Redis và nhả User Quota
-              const pipeline = this.redis.pipeline();
-              pipeline.hincrby(`show:${data.showId}:inventory`, data.type, data.quantity);
-              pipeline.incrby(`user:${data.userId}:concert:${data.showId}:zone:${data.type}`, -data.quantity);
-              await pipeline.exec();
-              
-              // Bắn SSE để Frontend cộng lại số vé hiển thị (quantity gửi số âm để hàm trừ ở Frontend biến thành cộng)
-              await this.redis.publish('ticketbox_sse_broadcast', JSON.stringify({
-                type: data.type,
-                quantity: -data.quantity,
-                message: `Hệ thống vừa nhả ${data.quantity} vé ${data.type} do quá hạn thanh toán.`
-              }));
-            }
-          } else {
-            // Kiểm tra ghế trên Redis xem đã thanh toán chưa
-            const seatOwner = await this.redis.hget(`show:${data.showId}:svip_seats`, data.seatNo);
-            if (seatOwner === `${data.userId}:PAID`) {
-              this.logger.log(`[Rollback] Bỏ qua Rollback ghế SVIP ${data.seatNo} vì User ${data.userId} đã thanh toán.`);
-            } else if (seatOwner === data.userId) {
-              this.logger.log(`[Rollback] User ${data.userId} đã quá 10 phút không thanh toán ghế ${data.seatNo}. Đang nhả vé...`);
-              
-              // Logic nhả vé: Import Redis client vào và gọi HDEL(showId:svip_seats, seatNo)
-              const pipeline = this.redis.pipeline();
-              pipeline.hdel(`show:${data.showId}:svip_seats`, data.seatNo);
-              pipeline.decrby(`user:${data.userId}:concert:${data.showId}:zone:svip`, 1);
-              await pipeline.exec();
-              
-              // Nhả ghế trên DB
-              await this.seatInventoryRepo.update(
-                { seatNo: data.seatNo, showId: data.showId, status: 'RESERVED' },
-                { status: 'AVAILABLE', reservedBy: null }
-              );
-
-              await this.redis.publish('ticketbox_sse_broadcast', JSON.stringify({
-                showId: data.showId,
-                seatNo: data.seatNo,
-                status: 'available',
-                message: `Ghế SVIP ${data.seatNo} đã được nhả.`
-              }));
-            }
-          }
-          
-          this.rabbitChannel.ack(msg);
-        } catch (err) {
-          this.rabbitChannel.nack(msg, false, false);
-        }
-      }
-    });
-  }
-
-  // Worker đồng bộ dữ liệu vào PostgreSQL khi thanh toán thành công
-  private startDatabaseSyncWorker() {
-    this.rabbitChannel.consume('payment_success_queue', async (msg) => {
-      if (msg !== null) {
-        try {
-          const data = JSON.parse(msg.content.toString());
-          this.logger.log(`[Database Sync] Nhận yêu cầu lưu Hóa đơn cho User: ${data.userId}, Show: ${data.showId}`);
-
-          // Tạo Invoice
-          const invoice = this.invoiceRepository.create({
-            userId: data.userId,
-            showId: data.showId,
-            totalAmount: data.totalAmount,
-            status: 'PAID',
-          });
-          const savedInvoice = await this.invoiceRepository.save(invoice);
-
-          // Tạo Tickets
-          const ticketsToSave = data.tickets.map((t: any) => {
-            return this.ticketRepository.create({
-              invoice: savedInvoice,
-              showId: data.showId,
-              seatNo: t.seatNo || null,
-              zone: t.zone || null,
-              price: t.price,
-            });
-          });
-          await this.ticketRepository.save(ticketsToSave);
-
-          this.logger.log(`[Database Sync] Đã lưu thành công Hóa đơn ${savedInvoice.id} và ${ticketsToSave.length} vé vào DB.`);
-          this.rabbitChannel.ack(msg);
-        } catch (error) {
-          this.logger.error(`[Database Sync] Lỗi khi lưu DB: ${error.message}`);
-          // Nếu lỗi do DB sập, có thể nack để queue lại (requeue = true)
-          this.rabbitChannel.nack(msg, false, true); 
-        }
-      }
-    });
   }
 }

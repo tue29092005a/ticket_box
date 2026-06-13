@@ -15,14 +15,14 @@ export const SeatMapPage: React.FC = () => {
       const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
       return remaining > 0 ? remaining : 0;
     }
-    const newExpireAt = Date.now() + 15 * 60 * 1000;
+    const newExpireAt = Date.now() + 5 * 60 * 1000;
     sessionStorage.setItem('booking_expireAt', newExpireAt.toString());
-    return 900;
+    return 300;
   });
   const navigate = useNavigate();
   
   const searchParams = new URLSearchParams(window.location.search);
-  const showId = searchParams.get('id') || '1';
+  const concert_id = Number(searchParams.get('id')) || 1;
 
   const [eventData, setEventData] = useState<any>(null);
   const [isBookingDown, setIsBookingDown] = useState(false);
@@ -47,8 +47,33 @@ export const SeatMapPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Kiểm tra đơn hàng đang chờ thanh toán
+    if (sessionStorage.getItem('idempotency_key') && sessionStorage.getItem('booking_expireAt')) {
+      const expireAt = parseInt(sessionStorage.getItem('booking_expireAt') || '0', 10);
+      if (expireAt > Date.now()) {
+        const wantsToContinue = window.confirm('Bạn đang có một đơn hàng đang chờ thanh toán. Bạn có muốn tiếp tục thanh toán không? Nhấn OK để tiếp tục, nhấn Cancel để hủy và chọn lại.');
+        if (wantsToContinue) {
+          const savedCart = sessionStorage.getItem('cart_state');
+          if (savedCart) {
+            navigate('/checkout.html', { state: JSON.parse(savedCart) });
+          } else {
+            navigate('/checkout.html');
+          }
+          return;
+        } else {
+          sessionStorage.removeItem('idempotency_key');
+          sessionStorage.removeItem('booking_expireAt');
+          sessionStorage.removeItem('cart_state');
+          // Có thể gọi API hủy đơn ở đây nếu cần, nhưng timeout/rollback worker sẽ tự xử lý
+        }
+      } else {
+        sessionStorage.removeItem('idempotency_key');
+        sessionStorage.removeItem('booking_expireAt');
+      }
+    }
+
     // Lấy thông tin sự kiện và zones
-    axiosClient.get(`/info/show/${showId}`).then((res) => {
+    axiosClient.get(`/info/show/${concert_id}`).then((res) => {
       setEventData(res.data);
       const initialInventory: Record<string, number> = {};
       const initialCounts: Record<string, number> = {};
@@ -63,14 +88,14 @@ export const SeatMapPage: React.FC = () => {
     }).catch(() => setIsBookingDown(true));
 
     // Lấy trạng thái ghế SVIP ban đầu
-    axiosClient.get(`/booking/show/${showId}/seats`).then((res) => {
+    axiosClient.get(`/booking/show/${concert_id}/seats`).then((res) => {
       if (res.data) {
         const booked = new Set<string>();
         Object.keys(res.data).forEach(seatId => booked.add(seatId));
         setBookedSeats(booked);
       }
     }).catch(() => setIsBookingDown(true));
-  }, [showId]);
+  }, [concert_id, navigate]);
 
   useTicketEvents(user?.id || 'guest', (payload) => {
     if (payload.seatNo) {
@@ -152,20 +177,26 @@ export const SeatMapPage: React.FC = () => {
     
     try {
       await axiosClient.post('/booking/hold', {
-        showId,
+        concert_id,
         seats: Array.from(selectedSeats),
         ticketCounts
       });
       
+      sessionStorage.removeItem('idempotency_key');
+
+      const statePayload = {
+        selectedSeats: Array.from(selectedSeats),
+        ticketCounts,
+        totalPrice,
+        totalTickets,
+        concert_id,
+        timeLeft: 300
+      };
+
+      sessionStorage.setItem('cart_state', JSON.stringify(statePayload));
+      
       navigate('/checkout.html', {
-        state: {
-          selectedSeats: Array.from(selectedSeats),
-          ticketCounts,
-          totalPrice,
-          totalTickets,
-          showId,
-          timeLeft
-        }
+        state: statePayload
       });
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -245,7 +276,7 @@ export const SeatMapPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => window.location.href = `/event.html?id=${showId}`}
+              onClick={() => window.location.href = `/event.html?id=${concert_id}`}
               className="p-2 hover:bg-surface-container-high transition-all rounded-full flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>arrow_back</span>

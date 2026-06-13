@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -13,10 +14,13 @@ import { BookingModule } from './booking/booking.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { InfoModule } from './info/info.module';
+import { PaymentModule } from './payment/payment.module';
+import { WorkerModule } from './worker/worker.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfig } from './config/mongo.config';
 
 const coreModules = [
+  ConfigModule.forRoot(),
   TypeOrmModule.forRoot(typeOrmConfig),
   MongooseModule.forRoot(mongoConfig.uri),
   ScheduleModule.forRoot(),
@@ -38,9 +42,13 @@ if (serviceName === 'auth') {
   serviceModules = [BookingModule];
 } else if (serviceName === 'info') {
   serviceModules = [InfoModule, SearchModule];
+} else if (serviceName === 'payment') {
+  serviceModules = [PaymentModule];
+} else if (serviceName === 'worker') {
+  serviceModules = [WorkerModule];
 } else {
   // Monolithic fallback
-  serviceModules = [AuthModule, BookingModule, InfoModule, SearchModule];
+  serviceModules = [AuthModule, BookingModule, InfoModule, SearchModule, PaymentModule, WorkerModule];
 }
 
 @Module({

@@ -22,7 +22,7 @@ const ZoneSetupSchema = SchemaFactory.createForClass(ZoneSetup);
 @Schema({ timestamps: true })
 export class ShowInfo {
   @Prop({ required: true, unique: true })
-  showId: string;
+  concert_id: number;
 
   @Prop()
   description: string;
