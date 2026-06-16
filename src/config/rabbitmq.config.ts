@@ -43,13 +43,14 @@ export const RABBITMQ_CHANNEL = 'RABBITMQ_CHANNEL';
         await channel.assertQueue(processQueue, { durable: true });
         await channel.bindQueue(processQueue, dlxExchange, 'rollback');
         
-        // Queue chờ (chứa message có TTL). Hết TTL, message sẽ tự động chuyển sang dlxExchange
-        const waitQueue = 'hold_timeout_wait_queue';
+        // Queue chờ duy nhất với TTL = 5 phút cho tất cả loại vé
+        const waitQueue = 'hold_timeout_wait_5m_queue';
         await channel.assertQueue(waitQueue, {
           durable: true,
           arguments: {
             'x-dead-letter-exchange': dlxExchange,
             'x-dead-letter-routing-key': 'rollback',
+            'x-message-ttl': 300000,
           }
         });
         

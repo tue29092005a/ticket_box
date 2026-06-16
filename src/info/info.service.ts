@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
 import Redis from 'ioredis';
+import NodeCache from 'node-cache';
 import { REDIS_CLIENT } from '../config/redis.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +14,8 @@ import { ZoneInventory } from '../booking/entities/zone-inventory.entity';
 export class InfoService implements OnModuleInit {
   private readonly logger = new Logger(InfoService.name);
   private activePromises = new Map<string, Promise<any>>(); // SingleFlight pattern
+  private showCache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
+  private inventoryCache = new NodeCache({ stdTTL: 1 }); // 1 second TTL
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
@@ -21,6 +24,13 @@ export class InfoService implements OnModuleInit {
     @InjectModel(ShowInfo.name) private readonly showInfoModel: Model<ShowInfoDocument>,
   ) {}
 
+  // =========================================================================
+  // SEED DATA (TẠO DỮ LIỆU MẪU)
+  // Hàm onModuleInit() này CHỈ chạy một lần duy nhất khi khởi động server.
+  // Nếu Database trống, nó sẽ chèn dữ liệu mẫu (hardcode) vào Postgres & MongoDB.
+  // Các hàm getAllShows() và getShowInfo() bên dưới SẼ ĐỌC TỪ DATABASE,
+  // chứ không đọc từ đống dữ liệu hardcode này.
+  // =========================================================================
   async onModuleInit() {
     this.logger.log('Seeding Concert and ShowInfo into database...');
     const count = await this.showRepo.count();
@@ -46,6 +56,7 @@ export class InfoService implements OnModuleInit {
       { concert_id: 1, zone: 'VIP', price: 1000000, totalCapacity: 150, availableSlots: 150 },
       { concert_id: 1, zone: 'GA', price: 500000, totalCapacity: 500, availableSlots: 500 },
       // Show 2
+      { concert_id: 2, zone: 'SVIP', price: 2000000, totalCapacity: 50, availableSlots: 50 },
       { concert_id: 2, zone: 'VIP', price: 1500000, totalCapacity: 30, availableSlots: 30 },
       { concert_id: 2, zone: 'Standard', price: 800000, totalCapacity: 100, availableSlots: 100 },
       // Show 3
@@ -72,6 +83,7 @@ export class InfoService implements OnModuleInit {
       { 
         concert_id: 2, description: 'Experience the magic of live jazz in an intimate setting.', artistBio: 'Featuring Tran Manh Tuan and friends.', mediaUrls: [], rules: 'Smart casual dress code.', coverImage: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBEZKKpYQbiNBJYhiH3k1geASGn5o9pd03RJpHTt72LA6N7VH7j1GTD2WZYHhZmqkblmQ1QFnlXBX6uPHXFeuxaMn6sYNtv35-RIG4PuwpzTg67JaqVUE-a8qWNUm7GJQl5lxSKPIgzIntWCWqbsCwSf4wEPaFiofmfJl41i1MKy_Mp8fbDVEz_BoiRZp78TbSLq0FngADVCBCgKG034Hn68-u_KHOBNblt3y1t4G9DO0A3ef7Zb6aaiezvW8bL0c3cnn8VK8-aYuny',
         zoneSetups: [
+          { name: 'SVIP', price: 2000000, color: '#FFD700', benefits: ['Meet & Greet'] },
           { name: 'VIP', price: 1500000, color: '#C0C0C0', benefits: ['Front Row', 'Wine'] },
           { name: 'Standard', price: 800000, color: '#4682B4', benefits: [] }
         ]
@@ -94,15 +106,27 @@ export class InfoService implements OnModuleInit {
         ]
       },
     ];
+    await this.showInfoModel.deleteMany({});
     await this.showInfoModel.insertMany(infos);
   }
 
   // Lấy danh sách tất cả các show
   async getAllShows() {
     const cacheKey = 'all_shows';
-    const redisData = await this.redis.get(cacheKey);
+    let shows = this.showCache.get(cacheKey);
+    if (shows) return shows;
+
+    let redisData: string | null = null;
+    try {
+      redisData = await this.redis.get(cacheKey);
+    } catch (error) {
+      this.logger.error(`[Redis Error] Failed to get all_shows: ${error.message}`);
+    }
+
     if (redisData) {
-      return JSON.parse(redisData);
+      const parsed = JSON.parse(redisData);
+      this.showCache.set(cacheKey, parsed);
+      return parsed;
     }
 
     if (this.activePromises.has(cacheKey)) {
@@ -111,8 +135,16 @@ export class InfoService implements OnModuleInit {
 
     const promise = (async () => {
       try {
-        const doubleCheck = await this.redis.get(cacheKey);
-        if (doubleCheck) return JSON.parse(doubleCheck);
+        let doubleCheck: string | null = null;
+        try {
+          doubleCheck = await this.redis.get(cacheKey);
+        } catch (e) {}
+
+        if (doubleCheck) {
+          const parsed = JSON.parse(doubleCheck);
+          this.showCache.set(cacheKey, parsed);
+          return parsed;
+        }
 
         const postgresShows = await this.showRepo.find();
         const mongoInfos = await this.showInfoModel.find().lean();
@@ -131,7 +163,10 @@ export class InfoService implements OnModuleInit {
           };
         });
 
-        await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60);
+        try {
+          await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60);
+        } catch (e) {}
+        this.showCache.set(cacheKey, finalData);
         return finalData;
       } finally {
         this.activePromises.delete(cacheKey);
@@ -144,68 +179,148 @@ export class InfoService implements OnModuleInit {
   // Lấy thông tin Show với Cache-Aside và SingleFlight (Mutex Lock cục bộ)
   async getShowInfo(concert_id: number) {
     const cacheKey = `concert_info:${concert_id}`;
+    let showInfo: any = this.showCache.get(cacheKey);
     
-    // 1. Kiểm tra trên Redis (Cache-Aside)
-    const redisData = await this.redis.get(cacheKey);
-    if (redisData) {
-      return JSON.parse(redisData);
-    }
-
-    // 2. SingleFlight Pattern: Tránh Cache Stampede khi Cache Miss
-    if (this.activePromises.has(cacheKey)) {
-      return this.activePromises.get(cacheKey);
-    }
-
-    const promise = (async () => {
+    if (!showInfo) {
+      // 1. Kiểm tra trên Redis (Cache-Aside)
+      let redisData: string | null = null;
       try {
-        // Double check phòng khi request đại diện khác vừa nạp vào Redis xong
-        const doubleCheck = await this.redis.get(cacheKey);
-        if (doubleCheck) {
-          return JSON.parse(doubleCheck);
-        }
-
-        // 3. Phân tách DB: Truy vấn đồng thời PostgreSQL và MongoDB
-        const [postgresData, postgresZones, mongoData] = await Promise.all([
-          this.showRepo.findOne({ where: { id: concert_id } }),
-          this.zoneRepo.find({ where: { concert_id } }),
-          this.showInfoModel.findOne({ concert_id }).lean()
-        ]);
-
-        const mongoZones = mongoData?.zoneSetups || [];
-        const zones = postgresZones.map(pz => {
-          const mz = mongoZones.find(m => m.name === pz.zone);
-          return {
-            zone: pz.zone,
-            price: pz.price,
-            totalCapacity: pz.totalCapacity,
-            availableSlots: pz.availableSlots,
-            color: mz?.color || '#cccccc',
-            benefits: mz?.benefits || []
-          };
-        });
-
-        const finalData = {
-          id: concert_id,
-          name: postgresData?.name || 'Unknown Show',
-          performanceDate: postgresData?.performanceDate,
-          location: postgresData?.location,
-          description: mongoData?.description,
-          artistBio: mongoData?.artistBio,
-          rules: mongoData?.rules,
-          coverImage: mongoData?.coverImage,
-          zones: zones
-        };
-        
-        // 4. Aggregate và Lưu Lên Redis với TTL 60s
-        await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60);
-        
-        return finalData;
-      } finally {
-        this.activePromises.delete(cacheKey); // Giải phóng Lock
+        redisData = await this.redis.get(cacheKey);
+      } catch (error) {
+        this.logger.error(`[Redis Error] Failed to get concert_info:${concert_id}: ${error.message}`);
       }
-    })();
 
-    this.activePromises.set(cacheKey, promise);
-    return promise;
+      if (redisData) {
+        showInfo = JSON.parse(redisData);
+        this.showCache.set(cacheKey, showInfo);
+      } else {
+      // 2. SingleFlight Pattern: Tránh Cache Stampede khi Cache Miss
+      if (this.activePromises.has(cacheKey)) {
+        showInfo = await this.activePromises.get(cacheKey);
+      } else {
+        const promise = (async () => {
+          try {
+            // Double check phòng khi request đại diện khác vừa nạp vào Redis xong
+            let doubleCheck: string | null = null;
+            try {
+              doubleCheck = await this.redis.get(cacheKey);
+            } catch (e) {}
+            if (doubleCheck) {
+              const parsed = JSON.parse(doubleCheck);
+              this.showCache.set(cacheKey, parsed);
+              return parsed;
+            }
+
+            // 3. Phân tách DB: Truy vấn đồng thời PostgreSQL và MongoDB
+            const [postgresData, postgresZones, mongoData] = await Promise.all([
+              this.showRepo.findOne({ where: { id: concert_id } }),
+              this.zoneRepo.find({ where: { concert_id } }),
+              this.showInfoModel.findOne({ concert_id }).lean()
+            ]);
+
+            const mongoZones = mongoData?.zoneSetups || [];
+            const zones = postgresZones.map(pz => {
+              const mz = mongoZones.find(m => m.name === pz.zone);
+              return {
+                zone: pz.zone,
+                price: pz.price,
+                totalCapacity: pz.totalCapacity,
+                availableSlots: pz.availableSlots,
+                color: mz?.color || '#cccccc',
+                benefits: mz?.benefits || []
+              };
+            });
+
+            const finalData = {
+              id: concert_id,
+              name: postgresData?.name || 'Unknown Show',
+              performanceDate: postgresData?.performanceDate,
+              location: postgresData?.location,
+              description: mongoData?.description,
+              artistBio: mongoData?.artistBio,
+              rules: mongoData?.rules,
+              coverImage: mongoData?.coverImage,
+              zones: zones
+            };
+            
+            // 4. Lưu Lên Redis với TTL 300s (5 phút) cho thông tin tĩnh
+            try {
+              await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 300);
+            } catch (e) {}
+            this.showCache.set(cacheKey, finalData);
+            
+            return finalData;
+          } finally {
+            this.activePromises.delete(cacheKey); // Giải phóng Lock
+          }
+        })();
+        this.activePromises.set(cacheKey, promise);
+        showInfo = await promise;
+      }
+    }
+    }
+
+    // 5. Lấy số lượng vé động từ Redis (concert:${concert_id}:inventory)
+    const inventoryKey = `concert:${concert_id}:inventory`;
+    let liveInventory: any = this.inventoryCache.get(inventoryKey);
+    
+    if (!liveInventory) {
+      if (this.activePromises.has(inventoryKey)) {
+        liveInventory = await this.activePromises.get(inventoryKey);
+      } else {
+        const promise = (async () => {
+          try {
+            const data = await this.redis.hgetall(inventoryKey);
+            if (data) this.inventoryCache.set(inventoryKey, data);
+            return data || {};
+          } catch (e) {
+            return {}; // Fallback rỗng để tránh văng lỗi 500
+          } finally {
+            this.activePromises.delete(inventoryKey);
+          }
+        })();
+        this.activePromises.set(inventoryKey, promise);
+        liveInventory = await promise;
+      }
+    }
+    
+    // Tính số lượng SVIP khả dụng
+    const svipKey = `concert:${concert_id}:svip_seats`;
+    let svipSeats: any = this.inventoryCache.get(svipKey);
+    if (!svipSeats) {
+      if (this.activePromises.has(svipKey)) {
+        svipSeats = await this.activePromises.get(svipKey);
+      } else {
+        const promise = (async () => {
+          try {
+            const data = await this.redis.hgetall(svipKey);
+            if (data) this.inventoryCache.set(svipKey, data);
+            return data || {};
+          } catch (e) {
+            return {};
+          } finally {
+            this.activePromises.delete(svipKey);
+          }
+        })();
+        this.activePromises.set(svipKey, promise);
+        svipSeats = await promise;
+      }
+    }
+    const bookedSvipCount = Object.keys(svipSeats || {}).length;
+
+    // Clone dữ liệu để không ghi đè vào tham chiếu của Memory/Cache
+    showInfo = JSON.parse(JSON.stringify(showInfo)); 
+    
+    // Merge live inventory vào zones
+    showInfo.zones = showInfo.zones.map((z: any) => {
+      if (z.zone === 'SVIP') {
+        z.availableSlots = Math.max(0, z.totalCapacity - bookedSvipCount);
+      } else if (liveInventory[z.zone] !== undefined) {
+        z.availableSlots = parseInt(liveInventory[z.zone], 10);
+      }
+      return z;
+    });
+
+    return showInfo;
   }
 }

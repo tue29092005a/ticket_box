@@ -4,21 +4,15 @@ import { useTicketEvents } from '../hooks/useTicketEvents';
 import axiosClient from '../utils/axiosClient';
 import { useAuth } from '../context/AuthContext';
 import { LoginModal } from '../components/LoginModal';
+import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const SeatMapPage: React.FC = () => {
   const { user, logout } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginMessage, setLoginMessage] = useState('');
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
-    if (savedExpireAt) {
-      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    const newExpireAt = Date.now() + 5 * 60 * 1000;
-    sessionStorage.setItem('booking_expireAt', newExpireAt.toString());
-    return 300;
-  });
+  
+  const { timeLeft, formattedTime } = useBookingTimer(300); // 5 phút
+
   const navigate = useNavigate();
   
   const searchParams = new URLSearchParams(window.location.search);
@@ -33,18 +27,8 @@ export const SeatMapPage: React.FC = () => {
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({});
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // Removing formatTime as we use formattedTime from hook
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
 
   useEffect(() => {
     // Kiểm tra đơn hàng đang chờ thanh toán
@@ -190,7 +174,7 @@ export const SeatMapPage: React.FC = () => {
         totalPrice,
         totalTickets,
         concert_id,
-        timeLeft: 300
+        timeLeft: timeLeft
       };
 
       sessionStorage.setItem('cart_state', JSON.stringify(statePayload));
@@ -286,7 +270,7 @@ export const SeatMapPage: React.FC = () => {
           <div className="flex items-center gap-gutter">
             <div className="glass-timer flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant" style={{ backdropFilter: 'blur(12px)', background: 'rgba(28, 27, 27, 0.8)' }}>
               <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>timer</span>
-              <span className="font-label-md text-on-surface">{formatTime(timeLeft)} Remaining</span>
+              <span className="font-label-md text-on-surface">{formattedTime} Remaining</span>
             </div>
             {user ? (
               <div className="flex items-center gap-4 border border-outline-variant rounded-full px-4 py-1.5 bg-surface-container-high/50 backdrop-blur-sm">

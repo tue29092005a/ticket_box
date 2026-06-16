@@ -123,6 +123,7 @@ export class WorkerService implements OnModuleInit {
   }
 
   private async handleSVIPRollback(data: any) {
+    this.logger.log(`[Rollback-Debug] handleSVIPRollback called with: ${JSON.stringify(data)}`);
     const { concert_id, userId, seatNo } = data;
 
     // Bước 1: Kiểm tra Payment Lock — user đang thanh toán → hoãn rollback
@@ -130,9 +131,7 @@ export class WorkerService implements OnModuleInit {
     if (paymentLock) {
       this.logger.log(`[Rollback] Payment lock active cho ghế ${seatNo}. Hoãn rollback 60s.`);
       // Re-push vào wait queue với TTL 60s
-      this.rabbitChannel.sendToQueue('hold_timeout_wait_queue', Buffer.from(JSON.stringify(data)), {
-        expiration: '60000',
-      });
+      this.rabbitChannel.sendToQueue('hold_timeout_wait_5m_queue', Buffer.from(JSON.stringify(data)));
       return;
     }
 
@@ -183,15 +182,14 @@ export class WorkerService implements OnModuleInit {
   }
 
   private async handleGARollback(data: any) {
+    this.logger.log(`[Rollback-Debug] handleGARollback called with: ${JSON.stringify(data)}`);
     const { concert_id, userId, type, quantity } = data;
 
     // Kiểm tra Payment Lock
     const paymentLock = await this.redis.get(`payment_lock:concert:${concert_id}:zone:${type}:${userId}`);
     if (paymentLock) {
       this.logger.log(`[Rollback] Payment lock active cho vé ${type}. Hoãn rollback 60s.`);
-      this.rabbitChannel.sendToQueue('hold_timeout_wait_queue', Buffer.from(JSON.stringify(data)), {
-        expiration: '60000',
-      });
+      this.rabbitChannel.sendToQueue('hold_timeout_wait_5m_queue', Buffer.from(JSON.stringify(data)));
       return;
     }
 

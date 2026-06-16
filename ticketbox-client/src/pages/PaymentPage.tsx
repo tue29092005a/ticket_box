@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import axiosClient from '../utils/axiosClient';
+import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,14 +19,7 @@ export const PaymentPage: React.FC = () => {
     timeLeft: initialTimeLeft = 300
   } = location.state || {};
 
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
-    if (savedExpireAt) {
-      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return initialTimeLeft;
-  });
+  const { timeLeft, m, s } = useBookingTimer(initialTimeLeft);
 
   const isProcessingRef = useRef(false);
 
@@ -36,11 +30,6 @@ export const PaymentPage: React.FC = () => {
         setPaypalClientId(res.data.clientId);
       }
     }).catch(console.error);
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
 
   // Back-button protection & Before unload protection
@@ -71,13 +60,7 @@ export const PaymentPage: React.FC = () => {
     };
   }, []);
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return { m, s };
-  };
 
-  const { m, s } = formatTime(timeLeft);
   const serviceFee = 45000;
   const finalPrice = totalPrice + serviceFee;
 
@@ -138,7 +121,7 @@ export const PaymentPage: React.FC = () => {
         <div className="flex flex-col gap-base px-6 md:px-margin-desktop py-4 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button onClick={() => navigate('/checkout.html')} className="p-2 hover:bg-surface-bright rounded-full transition-all">
+              <button onClick={() => navigate('/checkout.html', { state: location.state })} className="p-2 hover:bg-surface-bright rounded-full transition-all">
                 <span className="material-symbols-outlined text-primary">arrow_back</span>
               </button>
               <h1 className="font-headline-md text-headline-md text-primary font-bold">Liveshow Góc Ban Công: Vệt Nắng</h1>
@@ -209,7 +192,7 @@ export const PaymentPage: React.FC = () => {
               <div>
                 <h3 className="font-headline-md text-headline-md text-on-surface">Order Summary</h3>
               </div>
-              <button onClick={() => navigate('/seat.html')} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
+              <button onClick={() => navigate(`/seat.html?id=${concert_id}`)} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
             </div>
             
             <div className="p-6 space-y-6">

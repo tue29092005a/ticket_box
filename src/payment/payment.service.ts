@@ -15,7 +15,7 @@ import { SseService } from '../booking/sse.service';
 export class PaymentService implements OnModuleInit {
   private readonly logger = new Logger(PaymentService.name);
   private readonly VND_TO_USD_RATE = parseInt(process.env.VND_TO_USD_RATE || '25000', 10);
-  private readonly PAYMENT_LOCK_TTL = 180; // 3 phút
+  private readonly PAYMENT_LOCK_TTL = 300; // 5 phút
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
@@ -158,6 +158,25 @@ export class PaymentService implements OnModuleInit {
       if (existing.paypalOrderId) {
         // Đã tạo order trước đó nhưng chưa capture — trả lại order ID cũ
         return { orderId: existing.paypalOrderId, status: 'PENDING' };
+      }
+    }
+
+    // 1.5 Validation Gate: Kiểm tra quyền sở hữu vé trên Redis trước khi cho phép thanh toán
+    // Chặn đứng User A nếu thời gian giữ vé đã hết và vé đã bị nhả hoặc có chủ mới.
+    for (const seatNo of svipSeats) {
+      const owner = await this.redis.hget(`concert:${concert_id}:svip_seats`, seatNo);
+      if (!owner || (owner !== userId && owner !== `${userId}:PAID`)) {
+        throw new BadRequestException(`Phiên giữ ghế SVIP ${seatNo} của bạn đã hết hạn hoặc không hợp lệ.`);
+      }
+    }
+
+    for (const [zone, count] of Object.entries(ticketCounts)) {
+      if (count > 0) {
+        const userQuotaStr = await this.redis.get(`user:${userId}:concert:${concert_id}:zone:${zone}`);
+        const userQuota = parseInt(userQuotaStr || '0', 10);
+        if (userQuota < count) {
+          throw new BadRequestException(`Phiên giữ vé khu vực ${zone} của bạn đã hết hạn hoặc không hợp lệ.`);
+        }
       }
     }
 

@@ -20,8 +20,8 @@ export const PaymentSuccessPage: React.FC = () => {
           <br/><br/>
           <span className="text-primary font-bold">Vui lòng kiểm tra Email để nhận E-ticket.</span>
         </p>
-        <button onClick={() => navigate('/event.html')} className="bg-primary text-on-primary px-8 py-3 rounded-lg font-headline-md hover:brightness-110">
-          Quay lại trang sự kiện
+        <button onClick={() => navigate('/')} className="bg-primary text-on-primary px-8 py-3 rounded-lg font-headline-md hover:brightness-110">
+          Quay về trang chủ
         </button>
       </div>
     </div>

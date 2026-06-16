@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -10,34 +11,10 @@ export const CheckoutPage: React.FC = () => {
     ticketCounts = {},
     totalPrice = 0,
     totalTickets = 0,
+    concert_id = 1,
     timeLeft: initialTimeLeft = 300
   } = location.state || {};
-
-  const [timeLeft, setTimeLeft] = useState<number>(() => {
-    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
-    if (savedExpireAt) {
-      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return initialTimeLeft;
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return { m, s };
-  };
-
-  const { m, s } = formatTime(timeLeft);
-
-
+  const { timeLeft, m, s } = useBookingTimer(initialTimeLeft);
 
   return (
     <div className="bg-black text-on-surface font-body-md overflow-x-hidden min-h-screen flex flex-col">
@@ -62,7 +39,7 @@ export const CheckoutPage: React.FC = () => {
           <div className="flex flex-col gap-base px-6 md:px-margin-desktop py-6 w-full max-w-container-max mx-auto relative">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-4">
-                <button onClick={() => navigate('/seat.html')} className="material-symbols-outlined text-primary hover:bg-surface-bright transition-all p-2 rounded-full">arrow_back</button>
+                <button onClick={() => navigate(`/seat.html?id=${concert_id}`)} className="material-symbols-outlined text-primary hover:bg-surface-bright transition-all p-2 rounded-full">arrow_back</button>
                 <div className="flex flex-col">
                   <h1 className="font-headline-md text-headline-md text-primary">Liveshow Góc Ban Công: Vệt Nắng</h1>
                   <div className="flex flex-wrap gap-4 mt-1">
@@ -132,7 +109,7 @@ export const CheckoutPage: React.FC = () => {
                     <h3 className="font-headline-md text-headline-md text-on-surface">Order Summary</h3>
                     <p className="text-label-md font-label-md text-on-surface-variant">{m}:{s} Remaining</p>
                   </div>
-                  <button onClick={() => navigate('/seat.html')} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
+                  <button onClick={() => navigate(`/seat.html?id=${concert_id}`)} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
                 </div>
                 {/* Summary Content */}
                 <div className="p-6 space-y-6">
