@@ -1,0 +1,120 @@
+@baseUrl = http://localhost:3000/api
+@token = YOUR_TOKEN_HERE
+@eventId = YOUR_EVENT_ID_HERE
+
+### 1. Register an Organizer
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "organizer@example.com",
+  "password": "password123"
+}
+
+### 2. Login (Copy the access_token from the response into the @token variable above, or rely on REST Client auto-chaining if supported)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "organizer@example.com",
+  "password": "password123"
+}
+
+### 3. Create Draft (Step 1 Initiation)
+# @name createDraft
+POST {{baseUrl}}/organizer/concerts
+Authorization: Bearer {{login.response.body.access_token}}
+
+### Note: Copy the event_id from the response above into the @eventId variable
+
+### 4. Save Step 1 (Event Info)
+PUT {{baseUrl}}/organizer/concerts/{{createDraft.response.body.event_id}}/step/1
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "My Awesome Concert",
+  "category": "Music",
+  "address_type": "OFFLINE",
+  "venue_name": "My Arena",
+  "province": "Hanoi",
+  "ward": "Dich Vong",
+  "street": "123 Xuan Thuy",
+  "organizer_name": "Super Organizer",
+  "description": "The best concert ever"
+}
+
+### 5. Save Step 2 (Datetime & Tickets)
+PUT {{baseUrl}}/organizer/concerts/{{createDraft.response.body.event_id}}/step/2
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "start_time": "2026-10-15T20:00:00Z",
+  "ticket_types": [
+    {
+      "name": "VIP",
+      "price": 1000000,
+      "is_free": false,
+      "total_quantity": 50,
+      "min_per_order": 1,
+      "max_per_order": 4
+    },
+    {
+      "name": "GA",
+      "price": 500000,
+      "is_free": false,
+      "total_quantity": 200,
+      "min_per_order": 1,
+      "max_per_order": 10
+    }
+  ]
+}
+
+### 6. Save Step 3 (Settings)
+PUT {{baseUrl}}/organizer/concerts/{{createDraft.response.body.event_id}}/step/3
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "slug": "my-awesome-concert-2026",
+  "privacy": "PUBLIC",
+  "confirmation_message": "Thanks for buying! See you at the event."
+}
+
+### 7. Save Step 4 (Payment & Publish)
+# THIS WILL PUBLISH THE EVENT
+PUT {{baseUrl}}/organizer/concerts/{{createDraft.response.body.event_id}}/step/4
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "bank_account_name": "SUPER ORGANIZER",
+  "bank_account_number": "123456789",
+  "bank_name": "VCB",
+  "vat_business_type": "INDIVIDUAL"
+}
+
+### 8. Get Draft Status
+GET {{baseUrl}}/organizer/concerts/{{createDraft.response.body.event_id}}/draft
+Authorization: Bearer {{login.response.body.access_token}}
+
+### 9. List All Events (Public)
+GET {{baseUrl}}/concerts?page=1&limit=10
+
+### 10. Get Public Event Detail
+GET {{baseUrl}}/concerts/{{createDraft.response.body.event_id}}
+
+### 11. Admin: Update Event
+PUT {{baseUrl}}/admin/concerts/{{createDraft.response.body.event_id}}
+Authorization: Bearer {{login.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "description": "Updated concert description!"
+}
+
+### 12. Admin: Cancel Event
+DELETE {{baseUrl}}/admin/concerts/{{createDraft.response.body.event_id}}
+Authorization: Bearer {{login.response.body.access_token}}

@@ -13,6 +13,7 @@ import { BookingModule } from './booking/booking.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { InfoModule } from './info/info.module';
+import { EventModule } from './event/event.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfig } from './config/mongo.config';
 
@@ -24,8 +25,16 @@ const coreModules = [
   RabbitMQModule,
   MeilisearchModule,
   NotificationsModule,
+  // Serve frontend client
   ServeStaticModule.forRoot({
     rootPath: join(__dirname, '..', 'ticketbox-client', 'dist'),
+    serveRoot: '/',
+    exclude: ['/api*', '/uploads*'],
+  }),
+  // Serve uploaded images (local storage for MVP)
+  ServeStaticModule.forRoot({
+    rootPath: join(process.cwd(), 'uploads'),
+    serveRoot: '/uploads',
   }),
 ];
 
@@ -37,10 +46,10 @@ if (serviceName === 'auth') {
 } else if (serviceName === 'booking') {
   serviceModules = [BookingModule];
 } else if (serviceName === 'info') {
-  serviceModules = [InfoModule, SearchModule];
+  serviceModules = [InfoModule, EventModule, SearchModule];
 } else {
   // Monolithic fallback
-  serviceModules = [AuthModule, BookingModule, InfoModule, SearchModule];
+  serviceModules = [AuthModule, BookingModule, InfoModule, EventModule, SearchModule];
 }
 
 @Module({
