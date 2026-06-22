@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryColumn, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Column,
+  Index,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum SeatStatus {
   AVAILABLE = 'AVAILABLE',

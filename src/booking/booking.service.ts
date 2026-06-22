@@ -33,7 +33,7 @@ export class BookingService implements OnModuleInit {
       const cols = 20; // 20 columns = 200 seats
       for (const row of rows) {
         for (let i = 1; i <= cols; i++) {
-          seats.push({ seatNo: `${row}-${i}`, showId: '1', status: 'AVAILABLE', zone: 'SVIP' });
+          seats.push({ row, number: String(i), showId: '11111111-1111-1111-1111-111111111111', status: 'AVAILABLE', zone: 'SVIP' });
         }
       }
       await this.seatInventoryRepo.insert(seats);
@@ -44,8 +44,8 @@ export class BookingService implements OnModuleInit {
     const zoneCount = await this.zoneInventoryRepo.count();
     if (zoneCount === 0) {
       await this.zoneInventoryRepo.insert([
-        { zone: 'VIP', showId: '1', totalCapacity: 75, availableSlots: 75 },
-        { zone: 'Normal', showId: '1', totalCapacity: 100, availableSlots: 100 },
+        { zone: 'VIP', showId: '11111111-1111-1111-1111-111111111111', totalCapacity: 75, availableSlots: 75 },
+        { zone: 'Normal', showId: '11111111-1111-1111-1111-111111111111', totalCapacity: 100, availableSlots: 100 },
       ]);
       this.logger.log('Seeded 75 VIP and 100 Normal zones successfully.');
     }
@@ -169,7 +169,7 @@ export class BookingService implements OnModuleInit {
 
     // 2.5 DB Sync Write: Cập nhật Database đồng bộ để chặn Data Loss
     const dbUpdate = await this.seatInventoryRepo.update(
-      { seatNo, showId, status: 'AVAILABLE' },
+      { row: seatNo.split('-')[0], number: seatNo.split('-')[1], showId, status: 'AVAILABLE' },
       { status: 'RESERVED', reservedBy: userId, expiryTime: new Date(Date.now() + 10 * 60 * 1000) } // 10 mins
     );
 
@@ -212,7 +212,7 @@ export class BookingService implements OnModuleInit {
           
           // Double Check trên Database để chốt giao dịch
           const dbUpdate = await this.seatInventoryRepo.update(
-            { seatNo, showId, reservedBy: userId, status: 'RESERVED' },
+            { row: seatNo.split('-')[0], number: seatNo.split('-')[1], showId, reservedBy: userId, status: 'RESERVED' },
             { status: 'BOOKED' }
           );
 

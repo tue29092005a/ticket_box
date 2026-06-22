@@ -29,7 +29,7 @@ export class NotificationsCron {
         // Gửi toàn bộ batch thành 1 message duy nhất (Bulk Message) vào queue để Worker Pool xử lý
         this.rabbitChannel.sendToQueue('notification_queue', Buffer.from(JSON.stringify({
           type: 'BULK_REMINDER', 
-          showId: '1',
+          showId: '11111111-1111-1111-1111-111111111111',
           batchSize: batch.length,
           users: batch
         })));

@@ -161,7 +161,7 @@ export class NotificationsService implements OnModuleInit {
               
               // Nhả ghế trên DB
               await this.seatInventoryRepo.update(
-                { seatNo: data.seatNo, showId: data.showId, status: 'RESERVED' },
+                { row: data.seatNo.split('-')[0], number: data.seatNo.split('-')[1], showId: data.showId, status: 'RESERVED' },
                 { status: 'AVAILABLE', reservedBy: null }
               );
 
