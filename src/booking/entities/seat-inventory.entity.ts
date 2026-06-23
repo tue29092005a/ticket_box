@@ -34,6 +34,14 @@ export class SeatInventory {
   @Column({ type: 'timestamp', nullable: true })
   expiryTime: Date;
 
+  /**
+   * Sponsor allocation — NULL means a normal public seat.
+   * When set (e.g. 'sponsor-abc'), the seat is pre-reserved for that
+   * sponsor's VIP CSV import. Multiple sponsors can coexist in the same show.
+   */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  sponsorId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

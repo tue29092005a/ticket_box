@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SearchModule } from './search/search.module';
 import { InfoModule } from './info/info.module';
 import { EventModule } from './event/event.module';
+import { GuestModule } from './guest/guest.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfig } from './config/mongo.config';
 
@@ -47,9 +48,11 @@ if (serviceName === 'auth') {
   serviceModules = [BookingModule];
 } else if (serviceName === 'info') {
   serviceModules = [InfoModule, EventModule, SearchModule];
+} else if (serviceName === 'guest') {
+  serviceModules = [GuestModule];
 } else {
   // Monolithic fallback
-  serviceModules = [AuthModule, BookingModule, InfoModule, EventModule, SearchModule];
+  serviceModules = [AuthModule, BookingModule, InfoModule, EventModule, SearchModule, GuestModule];
 }
 
 @Module({

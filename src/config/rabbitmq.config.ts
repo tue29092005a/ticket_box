@@ -38,6 +38,16 @@ export const RABBITMQ_CHANNEL = 'RABBITMQ_CHANNEL';
         await channel.assertQueue('event_published_queue', { durable: true });
         await channel.assertQueue('event_cancelled_queue', { durable: true });
 
+        // ── Guest Service — VIP CSV Import queues ────────────────────────────
+        // Main queue consumed by GuestImportProcessor (prefetch=1, one file at a time)
+        await channel.assertQueue('vip_guest.import', { durable: true });
+
+        // Dead Letter Exchange: after 3 nacks, failed import messages route here
+        const guestDlx = 'guest_import_dlx';
+        await channel.assertExchange(guestDlx, 'direct', { durable: true });
+        await channel.assertQueue('dead_letter.vip_guest.import', { durable: true });
+        await channel.bindQueue('dead_letter.vip_guest.import', guestDlx, 'failed');
+
         return channel;
       },
     },

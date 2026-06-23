@@ -38,6 +38,18 @@ export class BookingService implements OnModuleInit {
       }
       await this.seatInventoryRepo.insert(seats);
       this.logger.log('Seeded 200 SVIP seats successfully.');
+
+      // Pre-allocate A-1 and A-2 to 'sponsor-test' for VIP CSV import testing.
+      // In production, this is done by an admin via a seat-allocation API (post-MVP).
+      await this.seatInventoryRepo.update(
+        { row: 'A', number: '1', showId: '11111111-1111-1111-1111-111111111111' },
+        { sponsorId: 'sponsor-test' },
+      );
+      await this.seatInventoryRepo.update(
+        { row: 'A', number: '2', showId: '11111111-1111-1111-1111-111111111111' },
+        { sponsorId: 'sponsor-test' },
+      );
+      this.logger.log('Seeded sponsorId=sponsor-test on seats A-1 and A-2.');
     }
 
     this.logger.log('Seeding ZoneInventory into database if not exists...');

@@ -1,0 +1,121 @@
+# ============================================================
+#  Guest Service — VIP CSV Import API Tests
+#  Tool: REST Client (VS Code extension)
+#  Run order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+# ============================================================
+
+@baseUrl     = http://localhost:3333
+@showId      = 11111111-1111-1111-1111-111111111111
+@sponsorId   = sponsor-test
+@csvFile     = vip_guests.csv
+
+# ── STEP 1: Get a token ──────────────────────────────────────
+# Paste the returned accessToken into @token below after running request #1
+
+@token = YOUR_ACCESS_TOKEN_HERE
+
+
+# ─────────────────────────────────────────────────────────────
+### 1. Register admin account (run once, skip if already registered)
+# @name register
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "admin@ticketbox.dev",
+  "password": "admin123"
+}
+
+
+# ─────────────────────────────────────────────────────────────
+### 2. Login — copy accessToken → paste into @token above
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@ticketbox.dev",
+  "password": "admin123"
+}
+
+
+# ─────────────────────────────────────────────────────────────
+### 3. [HAPPY PATH] Trigger VIP CSV import
+# Expects: 202 Accepted + { job_id, message }
+# The file vip_guests.csv must be in uploads/VIP_CSV/inbox/
+# @name triggerImport
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "filePath": "{{csvFile}}",
+  "showId": "{{showId}}",
+  "sponsorId": "{{sponsorId}}"
+}
+
+
+# ─────────────────────────────────────────────────────────────
+### 4. Poll job status — replace <job_id> with value from step 3 response
+# Expects: status progresses PENDING → PROCESSING → COMPLETED
+# Run this a few times until status = COMPLETED
+# @name getJobStatus
+GET {{baseUrl}}/api/admin/imports/PASTE_JOB_ID_HERE
+Authorization: Bearer {{token}}
+
+
+# ─────────────────────────────────────────────────────────────
+### 5. [IDEMPOTENCY TEST] Send the same request again
+# Expects: 409 Conflict + { message, job_id, status }
+# @name duplicateImport
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "filePath": "{{csvFile}}",
+  "showId": "{{showId}}",
+  "sponsorId": "{{sponsorId}}"
+}
+
+
+# ─────────────────────────────────────────────────────────────
+### 6. [SPONSOR ISOLATION TEST] Import same file but as a DIFFERENT sponsor
+# Expects: 202 Accepted, but job COMPLETED with errorCount=2
+# (Both rows rejected because seats A-1, A-2 belong to 'sponsor-test')
+# @name wrongSponsorImport
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "filePath": "{{csvFile}}",
+  "showId": "{{showId}}",
+  "sponsorId": "sponsor-other"
+}
+
+
+# ─────────────────────────────────────────────────────────────
+### 7. List all import jobs for a show
+# Expects: array of import_jobs ordered newest first
+# @name listJobs
+GET {{baseUrl}}/api/admin/imports?showId={{showId}}
+Authorization: Bearer {{token}}
+
+
+# ─────────────────────────────────────────────────────────────
+### 8. [BAD ROW TEST] Import a CSV with a missing email field
+# First, manually create uploads/VIP_CSV/inbox/bad_rows.csv with content:
+#   seatNo,name,email
+#   A-1,Trấn Thành,          <-- empty email
+# Then trigger below:
+# @name badRowImport
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "filePath": "bad_rows.csv",
+  "showId": "{{showId}}",
+  "sponsorId": "{{sponsorId}}"
+}
