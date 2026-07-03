@@ -7,6 +7,7 @@ import { RedisModule } from './config/redis.config';
 import { RabbitMQModule } from './config/rabbitmq.config';
 import { MeilisearchModule } from './config/meilisearch.config';
 import { typeOrmConfig } from './config/database.config';
+import { MinioModule } from './minio/minio.module';
 
 import { AuthModule } from './auth/auth.module';
 import { BookingModule } from './booking/booking.module';
@@ -26,13 +27,16 @@ const coreModules = [
   RabbitMQModule,
   MeilisearchModule,
   NotificationsModule,
+  // MinIO object storage — global module, MinioService available everywhere
+  MinioModule,
   // Serve frontend client
   ServeStaticModule.forRoot({
     rootPath: join(__dirname, '..', 'ticketbox-client', 'dist'),
     serveRoot: '/',
     exclude: ['/api*', '/uploads*'],
   }),
-  // Serve uploaded images (local storage for MVP)
+  // @deprecated: local-disk image serving — will be removed in Phase 4 once
+  // all image_url fields point to MinIO object keys instead of /uploads/ paths.
   ServeStaticModule.forRoot({
     rootPath: join(process.cwd(), 'uploads'),
     serveRoot: '/uploads',

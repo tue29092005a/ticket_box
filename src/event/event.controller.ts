@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { EventService } from './event.service';
+import { MinioService } from '../minio/minio.service';
 import { SaveStep1Dto } from './dto/save-step1.dto';
 import { SaveStep2Dto } from './dto/save-step2.dto';
 import { SaveStep3Dto } from './dto/save-step3.dto';
@@ -14,7 +15,10 @@ import { UpdateEventDto } from './dto/update-event.dto';
 
 @Controller('api')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly minioService: MinioService,
+  ) {}
 
   @Post('organizer/concerts')
   @UseGuards(JwtAuthGuard)
@@ -53,6 +57,30 @@ export class EventController {
     return this.eventService.getDraft(eventId, req.user.userId);
   }
 
+  /**
+   * GET /api/organizer/concerts/:id/upload-url?type=image_url&ext=jpg
+   *
+   * Returns a presigned PUT URL the client uses to upload directly to MinIO.
+   * Server enforces MIME type (Q4) and ContentLength limit (Q3).
+   *
+   * @param type - one of: image_url | cover_image_url | organizer_logo_url | ticket_image_url
+   * @param ext  - file extension without dot, e.g. "jpg", "png", "webp"
+   */
+  @Get('organizer/concerts/:id/upload-url')
+  @UseGuards(JwtAuthGuard)
+  async getImageUploadUrl(
+    @Param('id') eventId: string,
+    @Query('type') type: string,
+    @Query('ext') ext = 'jpg',
+  ) {
+    return this.minioService.getImagePresignedUploadUrl(eventId, type, ext);
+  }
+
+  /**
+   * @deprecated Use GET /api/organizer/concerts/:id/upload-url instead.
+   * Kept for backward compatibility — will be removed in Phase 4.
+   * Uploads the file to local disk (1 MB limit). MinIO version has no such limit.
+   */
   @Post('organizer/concerts/:id/upload')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
@@ -99,3 +127,4 @@ export class EventController {
     return this.eventService.updateGASeatCounts(eventId, zone, body.available, body.reserved, body.sold);
   }
 }
+
