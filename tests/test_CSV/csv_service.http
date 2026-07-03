@@ -12,7 +12,7 @@
 # ── STEP 1: Get a token ──────────────────────────────────────
 # Paste the returned accessToken into @token below after running request #1
 
-@token = YOUR_ACCESS_TOKEN_HERE
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0NzUxNGQ1My1lODcyLTQ4OTktYTNhZi05NDJjZDNhZTk3NjUiLCJpYXQiOjE3ODIyMDc0NDMsImV4cCI6MTc4MjIwODM0M30.gLI9IVh-pfYcgunIZJSTqH1Yq0EddsAzRBIBpcuGbjk
 
 
 # ─────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ Content-Type: application/json
 # Expects: status progresses PENDING → PROCESSING → COMPLETED
 # Run this a few times until status = COMPLETED
 # @name getJobStatus
-GET {{baseUrl}}/api/admin/imports/PASTE_JOB_ID_HERE
+GET {{baseUrl}}/api/admin/imports/63e266f9-ddf2-4e86-a5e7-8a13e2b54c3f
 Authorization: Bearer {{token}}
 
 

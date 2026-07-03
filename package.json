@@ -12,6 +12,7 @@
     "start:auth": "cross-env PORT=3001 SERVICE_NAME=auth ts-node src/main.ts",
     "start:booking": "cross-env PORT=3002 SERVICE_NAME=booking ts-node src/main.ts",
     "start:info": "cross-env PORT=3003 SERVICE_NAME=info ts-node src/main.ts",
+    "start:event": "cross-env PORT=3004 SERVICE_NAME=event ts-node src/main.ts",
     "start:worker": "ts-node src/apps-worker/processors/order.processor.ts"
   },
   "dependencies": {

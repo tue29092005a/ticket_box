@@ -24,13 +24,13 @@ Content-Type: application/json
 ### 3. Create Draft (Step 1 Initiation)
 # @name createDraft
 POST {{baseUrl}}/api/organizer/concerts
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 
 ### Note: Copy the event_id from the response above into the @eventId variable
 
 ### 4. Save Step 1 (Event Info)
-PUT {{baseUrl}}/api/organizer/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9/step/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+PUT {{baseUrl}}/api/organizer/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3/step/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 Content-Type: application/json
 
 {
@@ -46,8 +46,8 @@ Content-Type: application/json
 }
 
 ### 5. Save Step 2 (Datetime & Tickets)
-PUT {{baseUrl}}/api/organizer/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9/step/2
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+PUT {{baseUrl}}/api/organizer/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3/step/2
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 Content-Type: application/json
 
 {
@@ -73,8 +73,8 @@ Content-Type: application/json
 }
 
 ### 6. Save Step 3 (Settings)
-PUT {{baseUrl}}/api/organizer/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9/step/3
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+PUT {{baseUrl}}/api/organizer/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3/step/3
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 Content-Type: application/json
 
 {
@@ -85,8 +85,8 @@ Content-Type: application/json
 
 ### 7. Save Step 4 (Payment & Publish)
 # THIS WILL PUBLISH THE EVENT
-PUT {{baseUrl}}/api/organizer/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9/step/4
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+PUT {{baseUrl}}/api/organizer/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3/step/4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 Content-Type: application/json
 
 {
@@ -97,18 +97,18 @@ Content-Type: application/json
 }
 
 ### 8. Get Draft Status
-GET {{baseUrl}}/api/organizer/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9/draft
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+GET {{baseUrl}}/api/organizer/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3/draft
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 
 ### 9. List All Events (Public)
 GET {{baseUrl}}/api/concerts?page=1&limit=10
 
 ### 10. Get Public Event Detail
-GET {{baseUrl}}/api/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9
+GET {{baseUrl}}/api/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3
 
 ### 11. Admin: Update Event
-PUT {{baseUrl}}/api/admin/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+PUT {{baseUrl}}/api/admin/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk
 Content-Type: application/json
 
 {
@@ -116,5 +116,5 @@ Content-Type: application/json
 }
 
 ### 12. Admin: Cancel Event
-DELETE {{baseUrl}}/api/admin/concerts/65f4a691-413b-4dce-836f-ac18f8d050a9
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1M2ZkZjRkNi1mYmEwLTQ2NGQtYjJiZC1jZmJiMzIyYTAyZGEiLCJpYXQiOjE3ODIxMzk4NjYsImV4cCI6MTc4MjE0MDc2Nn0.yCNizJuKeqOkphnGSkL4SZ6DJqfjCgxhK0eud5xtobM
+DELETE {{baseUrl}}/api/admin/concerts/6f71fefb-3fe1-49db-9fb2-a316d66846f3
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMwOTA5NzUsImV4cCI6MTc4MzA5MTg3NX0.-zH6I_xZBucSzqbTsJEkXd9cMQa0NI-XHWJwwqCezGk

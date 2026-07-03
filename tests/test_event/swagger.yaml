@@ -1,0 +1,532 @@
+openapi: 3.0.0
+info:
+  title: TicketBox Event Service API
+  version: 1.0.0
+  description: API documentation for Event Service (Concerts) based on the HTTP test file.
+servers:
+  - url: http://localhost:3333
+    description: Local Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      summary: Register an Organizer
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "organizer@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+
+  /auth/login:
+    post:
+      summary: Login to get Access Token
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "organizer@example.com"
+                password:
+                  type: string
+                  example: "password123"
+      responses:
+        '200':
+          description: Returns access_token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  refreshToken: { type: string }
+
+  /api/organizer/concerts:
+    post:
+      summary: Create Draft (Step 1 Initiation)
+      tags: [Organizer]
+      responses:
+        '201':
+          description: Draft created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "DRAFT" }
+                  current_step: { type: integer, example: 1 }
+                  message: { type: string, example: "Draft created. Proceed to fill step 1." }
+
+  /api/organizer/concerts/{id}/step/1:
+    put:
+      summary: Save Step 1 (Event Info)
+      tags: [Organizer]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "My Awesome Concert"
+                category:
+                  type: string
+                  example: "Music"
+                address_type:
+                  type: string
+                  example: "OFFLINE"
+                venue_name:
+                  type: string
+                  example: "My Arena"
+                province:
+                  type: string
+                  example: "Hanoi"
+                ward:
+                  type: string
+                  example: "Dich Vong"
+                street:
+                  type: string
+                  example: "123 Xuan Thuy"
+                organizer_name:
+                  type: string
+                  example: "Super Organizer"
+                description:
+                  type: string
+                  example: "The best concert ever"
+      responses:
+        '200':
+          description: Step 1 saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "DRAFT" }
+                  step_completed: { type: integer, example: 1 }
+                  next_step: { type: integer, example: 2 }
+
+  /api/organizer/concerts/{id}/step/2:
+    put:
+      summary: Save Step 2 (Datetime & Tickets)
+      tags: [Organizer]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start_time:
+                  type: string
+                  format: date-time
+                  example: "2026-10-15T20:00:00Z"
+                ticket_types:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name: 
+                        type: string
+                        example: "VIP"
+                      price: 
+                        type: integer
+                        example: 1000000
+                      is_free: 
+                        type: boolean
+                        example: false
+                      total_quantity: 
+                        type: integer
+                        example: 50
+                      min_per_order: 
+                        type: integer
+                        example: 1
+                      max_per_order: 
+                        type: integer
+                        example: 4
+      responses:
+        '200':
+          description: Step 2 saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "DRAFT" }
+                  step_completed: { type: integer, example: 2 }
+                  next_step: { type: integer, example: 3 }
+                  ticket_types_saved: { type: integer, example: 2 }
+
+  /api/organizer/concerts/{id}/step/3:
+    put:
+      summary: Save Step 3 (Settings)
+      tags: [Organizer]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                slug:
+                  type: string
+                  example: "my-awesome-concert-2026"
+                privacy:
+                  type: string
+                  example: "PUBLIC"
+                confirmation_message:
+                  type: string
+                  example: "Thanks for buying! See you at the event."
+      responses:
+        '200':
+          description: Step 3 saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "DRAFT" }
+                  step_completed: { type: integer, example: 3 }
+                  next_step: { type: integer, example: 4 }
+                  event_url: { type: string, example: "https://ticketbox.vn/my-awesome-concert-2026" }
+
+  /api/organizer/concerts/{id}/step/4:
+    put:
+      summary: Save Step 4 (Payment & Publish)
+      tags: [Organizer]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bank_account_name:
+                  type: string
+                  example: "SUPER ORGANIZER"
+                bank_account_number:
+                  type: string
+                  example: "123456789"
+                bank_name:
+                  type: string
+                  example: "VCB"
+                vat_business_type:
+                  type: string
+                  example: "INDIVIDUAL"
+      responses:
+        '200':
+          description: Step 4 saved and event published
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "ACTIVE" }
+                  message: { type: string, example: "Event published successfully." }
+                  event_url: { type: string, example: "https://ticketbox.vn/my-awesome-concert-2026" }
+
+  /api/organizer/concerts/{id}/draft:
+    get:
+      summary: Get Draft Status
+      tags: [Organizer]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Draft status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id: { type: string }
+                  status: { type: string, example: "ACTIVE" }
+                  current_step: { type: integer, example: 4 }
+                  step_1:
+                    type: object
+                    properties:
+                      name: { type: string, example: "My Awesome Concert" }
+                      category: { type: string, example: "Music" }
+                      address_type: { type: string, example: "OFFLINE" }
+                      venue_name: { type: string, example: "My Arena" }
+                      province: { type: string, example: "Hanoi" }
+                      ward: { type: string, example: "Dich Vong" }
+                      street: { type: string, example: "123 Xuan Thuy" }
+                      organizer_name: { type: string, example: "Super Organizer" }
+                      description: { type: string, example: "The best concert ever" }
+                  step_2:
+                    type: object
+                    properties:
+                      start_time: { type: string, format: date-time, example: "2026-10-15T20:00:00.000Z" }
+                      ticket_types:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id: { type: string, format: uuid }
+                            name: { type: string, example: "VIP" }
+                            price: { type: integer, example: 1000000 }
+                            is_free: { type: boolean, example: false }
+                            total_quantity: { type: integer, example: 50 }
+                            min_per_order: { type: integer, example: 1 }
+                            max_per_order: { type: integer, example: 4 }
+                            sale_start: { type: string, nullable: true }
+                            sale_end: { type: string, nullable: true }
+                            sort_order: { type: integer, example: 0 }
+                  step_3:
+                    type: object
+                    properties:
+                      slug: { type: string, example: "my-awesome-concert-2026" }
+                      privacy: { type: string, example: "PUBLIC" }
+                      confirmation_message: { type: string, example: "Thanks for buying! See you at the event." }
+                  step_4:
+                    type: object
+                    properties:
+                      bank_account_name: { type: string, example: "SUPER ORGANIZER" }
+                      bank_account_number: { type: string, example: "123456789" }
+                      bank_name: { type: string, example: "VCB" }
+                      vat_business_type: { type: string, example: "INDIVIDUAL" }
+
+  /api/concerts:
+    get:
+      summary: List All Events (Public)
+      tags: [Public]
+      security: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of public events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        date: { type: string, format: date-time }
+                        start_time: { type: string, format: date-time }
+                        venue_name: { type: string }
+                        province: { type: string }
+                        image_url: { type: string, nullable: true }
+                        cover_image_url: { type: string, nullable: true }
+                        category: { type: string }
+                        status: { type: string, example: "ACTIVE" }
+                        privacy: { type: string, example: "PUBLIC" }
+                        slug: { type: string }
+                  total:
+                    type: integer
+                    example: 1
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+
+  /api/concerts/{id}:
+    get:
+      summary: Get Public Event Detail
+      tags: [Public]
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event detail retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  name: { type: string }
+                  description: { type: string }
+                  category: { type: string }
+                  address_type: { type: string }
+                  venue_name: { type: string }
+                  province: { type: string }
+                  ward: { type: string }
+                  street: { type: string }
+                  image_url: { type: string, nullable: true }
+                  cover_image_url: { type: string, nullable: true }
+                  organizer_name: { type: string }
+                  organizer_info: { type: string, nullable: true }
+                  organizer_logo_url: { type: string, nullable: true }
+                  privacy: { type: string }
+                  slug: { type: string }
+                  status: { type: string, example: "ACTIVE" }
+                  start_time: { type: string, format: date-time }
+                  ticket_types:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string, example: "VIP" }
+                        price: { type: integer, example: 1000000 }
+                        is_free: { type: boolean, example: false }
+                        total_quantity: { type: integer, example: 50 }
+                        available: { type: integer, example: 0 }
+                        reserved: { type: integer, example: 0 }
+                        sold: { type: integer, example: 0 }
+                        locked: { type: integer, example: 0 }
+                        min_per_order: { type: integer, example: 1 }
+                        max_per_order: { type: integer, example: 4 }
+                        sale_start: { type: string, nullable: true }
+                        sale_end: { type: string, nullable: true }
+                        description: { type: string, nullable: true }
+                        ticket_image_url: { type: string, nullable: true }
+                  created_at: { type: string, format: date-time }
+                  cache_hit: { type: boolean, example: true }
+                  cache_ttl: { type: integer, example: 600 }
+
+  /api/admin/concerts/{id}:
+    put:
+      summary: Admin Update Event
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: "Updated concert description!"
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  name: { type: string }
+                  description: { type: string }
+                  status: { type: string }
+                  created_at: { type: string, format: date-time }
+                  cache_hit: { type: boolean }
+    delete:
+      summary: Admin Cancel Event
+      tags: [Admin]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Event cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  status: { type: string, example: "CANCELLED" }
+                  message: { type: string, example: "Event cancelled. Refund process initiated." }

@@ -8,7 +8,7 @@ This is the same extension used for `tests/test_event/event-service.http`.
 
 ### 2. Start the server
 ```bash
-npm run start:dev
+npm run start
 ```
 The server listens on **`http://localhost:3333`** by default.
 

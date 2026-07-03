@@ -50,6 +50,8 @@ if (serviceName === 'auth') {
   serviceModules = [InfoModule, EventModule, SearchModule];
 } else if (serviceName === 'guest') {
   serviceModules = [GuestModule];
+} else if (serviceName === 'event') {
+  serviceModules = [EventModule];
 } else {
   // Monolithic fallback
   serviceModules = [AuthModule, BookingModule, InfoModule, EventModule, SearchModule, GuestModule];
