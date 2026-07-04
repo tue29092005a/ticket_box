@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import debounce from 'lodash.debounce';
-import { useTicketEvents } from '../hooks/useTicketEvents';
 import { useAuth } from '../context/AuthContext';
 import { LoginModal } from '../components/LoginModal';
 
@@ -40,15 +39,6 @@ export const EventPage: React.FC = () => {
     setSearchQuery(e.target.value);
     fetchSearchResults(e.target.value);
   };
-
-  const { lastEvent } = useTicketEvents(eventId);
-  const [availableVip, setAvailableVip] = useState(45); // Fake ban đầu
-
-  useEffect(() => {
-    if (lastEvent && lastEvent.availableTickets !== undefined) {
-      setAvailableVip(lastEvent.availableTickets);
-    }
-  }, [lastEvent]);
 
   useEffect(() => {
     const fetchEventData = async () => {
