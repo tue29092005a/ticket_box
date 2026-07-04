@@ -23,12 +23,6 @@ export const CheckoutPage: React.FC = () => {
         <div className="flex justify-between items-center px-6 md:px-margin-desktop py-4 w-full max-w-container-max mx-auto">
           <a href="/" className="text-headline-lg font-headline-lg font-bold text-on-primary-container hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
           <div className="hidden md:flex gap-gutter items-center">
-            <nav className="flex gap-gutter">
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">Create Event</a>
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">My Tickets</a>
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">Account</a>
-            </nav>
-
           </div>
         </div>
       </header>

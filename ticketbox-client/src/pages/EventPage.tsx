@@ -16,6 +16,7 @@ export const EventPage: React.FC = () => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [eventData, setEventData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Bọc API call trong Debounce 300ms
   const fetchSearchResults = useMemo(
@@ -46,8 +47,13 @@ export const EventPage: React.FC = () => {
         setLoading(true);
         const res = await axiosClient.get(`/info/show/${eventId}`);
         setEventData(res.data);
-      } catch (error) {
-        console.error('Failed to fetch event details:', error);
+      } catch (err: any) {
+        console.error('Failed to fetch event details:', err);
+        if (err.response?.status === 502) {
+          setError(err.response.data?.message || 'Hệ thống tải dữ liệu sự kiện đang nâng cấp. Vui lòng quay lại sau ít phút.');
+        } else {
+          setError('Đã có lỗi xảy ra khi tải dữ liệu sự kiện.');
+        }
       } finally {
         setLoading(false);
       }
@@ -158,8 +164,20 @@ export const EventPage: React.FC = () => {
       </nav>
 
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-margin-desktop space-y-margin-desktop">
-        {/* Hero Section: Event Ticket Card */}
-        <section className="relative group">
+        {error ? (
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4 animate-fade-in bg-surface-container-high rounded-xl shadow-2xl">
+            <span className="material-symbols-outlined text-[80px] text-on-surface-variant/50 mb-6">conveyor_belt</span>
+            <h3 className="font-headline-md text-on-surface mb-2">Thông tin không khả dụng</h3>
+            <p className="font-body-md text-on-surface-variant max-w-md">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-8 bg-primary text-on-primary px-6 py-2.5 rounded-full font-bold hover:bg-white transition-colors flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">refresh</span>
+              Thử lại
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Hero Section: Event Ticket Card */}
+            <section className="relative group">
           {loading ? (
             <div className="flex flex-col md:flex-row bg-surface-container-high rounded-xl h-[400px] animate-pulse"></div>
           ) : (
@@ -298,6 +316,8 @@ export const EventPage: React.FC = () => {
 
           </div>
         </div>
+          </>
+        )}
       </main>
 
       {/* FAB for quick booking (Mobile) */}

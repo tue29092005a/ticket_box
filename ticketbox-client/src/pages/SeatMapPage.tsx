@@ -7,7 +7,7 @@ import { LoginModal } from '../components/LoginModal';
 import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const SeatMapPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginMessage, setLoginMessage] = useState('');
   
@@ -234,7 +234,7 @@ export const SeatMapPage: React.FC = () => {
         })}
       </div>
       <div className="flex gap-2">
-        {[...Array(8)].map((_, i) => {
+        {[...Array(4)].map((_, i) => {
           const seatNum = i + 17;
           const seatId = `${rowLabel}-${seatNum}`;
           return (
@@ -272,24 +272,25 @@ export const SeatMapPage: React.FC = () => {
               <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>timer</span>
               <span className="font-label-md text-on-surface">{formattedTime} Remaining</span>
             </div>
-            {user ? (
-              <div className="flex items-center gap-4 border border-outline-variant rounded-full px-4 py-1.5 bg-surface-container-high/50 backdrop-blur-sm">
-                <span className="text-sm font-medium text-purple-400">{user.email}</span>
-                <button 
-                  onClick={logout}
-                  className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            ) : (
-              <span className="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-2 rounded-full transition-all" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }} onClick={() => { setLoginMessage(''); setIsLoginModalOpen(true); }}>account_circle</span>
-            )}
           </div>
         </div>
       </header>
       
-      <main className="flex h-[calc(100vh-80px)] overflow-hidden flex-row">
+      <main className="flex h-[calc(100vh-80px)] overflow-hidden flex-row relative">
+        {isBookingDown && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-surface-container-high p-8 rounded-xl flex flex-col items-center max-w-md text-center border border-outline-variant shadow-2xl">
+              <span className="material-symbols-outlined text-[64px] text-error mb-4">cloud_off</span>
+              <h3 className="text-xl font-bold text-on-surface mb-2">Hệ thống đặt vé đang gián đoạn</h3>
+              <p className="text-on-surface-variant mb-6">Lượng truy cập hiện đang quá tải hoặc hệ thống bảo trì. Vui lòng thử lại sau.</p>
+              <button onClick={() => window.location.reload()} className="bg-primary text-on-primary px-6 py-2.5 rounded-full font-bold hover:brightness-110 transition-all flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">refresh</span>
+                Tải lại trang
+              </button>
+            </div>
+          </div>
+        )}
+        
         {hasSVIP ? (
           <section className="flex-1 overflow-auto seat-map-scroll flex flex-col items-center p-12 bg-black h-full relative" style={{ scrollbarWidth: 'thin' }}>
 

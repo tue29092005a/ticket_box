@@ -28,7 +28,7 @@ export class BookingService implements OnModuleInit {
   async onModuleInit() {
     this.logger.log('Seeding SVIP seats into database if not exists...');
     
-    const concertIds = [1, 2, 3];
+    const concertIds = [1, 2, 3, 4];
 
     for (const cid of concertIds) {
       const [{ exists }] = await this.seatInventoryRepo.query(`SELECT EXISTS (SELECT 1 FROM concerts WHERE id = $1)`, [cid]);
@@ -40,15 +40,15 @@ export class BookingService implements OnModuleInit {
       const count = await this.seatInventoryRepo.count({ where: { concert_id: cid } });
       if (count === 0) {
         const seats = [];
-        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']; // 10 rows
-        const cols = 20; // 20 columns = 200 seats
+        const rows = ['A', 'B']; // 2 rows
+        const cols = 20; // 20 columns = 40 seats
         for (const row of rows) {
           for (let i = 1; i <= cols; i++) {
             seats.push({ seatNo: `${row}-${i}`, concert_id: cid, status: 'AVAILABLE', zone: 'SVIP' });
           }
         }
         await this.seatInventoryRepo.insert(seats);
-        this.logger.log(`Seeded 200 SVIP seats for concert ${cid} successfully.`);
+        this.logger.log(`Seeded 40 SVIP seats for concert ${cid} successfully.`);
       }
 
       this.logger.log(`Seeding ZoneInventory for concert ${cid} into database if not exists...`);
@@ -188,7 +188,7 @@ export class BookingService implements OnModuleInit {
   // Đặt ghế SVIP cụ thể sử dụng HSETNX để tránh trùng ghế
   async bookSVIPTicket(concert_id: number, userId: string, seatNo: string) {
     const seatHashKey = `concert:${concert_id}:svip_seats`;
-    const maxSvipSeats = 200;
+    const maxSvipSeats = 40;
 
     // 1. Kiểm tra số lượng ghế đã bán (HLEN)
     const soldSeatsCount = await this.redis.hlen(seatHashKey);

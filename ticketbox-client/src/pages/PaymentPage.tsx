@@ -8,6 +8,7 @@ export const PaymentPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+  const [paymentServiceError, setPaymentServiceError] = useState<string | null>(null);
 
   const {
     selectedSeats = [],
@@ -23,13 +24,21 @@ export const PaymentPage: React.FC = () => {
 
   const isProcessingRef = useRef(false);
 
-  useEffect(() => {
+  const fetchConfig = () => {
+    setPaymentServiceError(null);
     // Lấy config PayPal Client ID từ backend
     axiosClient.get('/payment/config').then((res) => {
       if (res.data && res.data.clientId) {
         setPaypalClientId(res.data.clientId);
       }
-    }).catch(console.error);
+    }).catch((err) => {
+      console.error(err);
+      setPaymentServiceError(err.response?.data?.message || 'Cổng thanh toán tạm thời gián đoạn. Xin lỗi bạn vì sự bất tiện này!');
+    });
+  };
+
+  useEffect(() => {
+    fetchConfig();
   }, []);
 
   // Back-button protection & Before unload protection
@@ -169,6 +178,25 @@ export const PaymentPage: React.FC = () => {
                       />
                     </div>
                   </PayPalScriptProvider>
+                ) : paymentServiceError ? (
+                  <div className="text-center py-8 bg-error/10 rounded-xl border border-error/20 flex flex-col items-center gap-4">
+                    <span className="material-symbols-outlined text-error text-4xl">error</span>
+                    <div className="text-error font-body-lg px-4">{paymentServiceError}</div>
+                    <div className="flex gap-4 mt-2">
+                      <button 
+                        onClick={fetchConfig}
+                        className="px-6 py-2 bg-surface-container-highest hover:bg-surface-bright text-on-surface rounded-full font-label-lg transition-colors border border-outline"
+                      >
+                        Thử kết nối lại
+                      </button>
+                      <button 
+                        onClick={() => navigate('/checkout.html', { state: location.state })}
+                        className="px-6 py-2 bg-primary hover:bg-primary-dark text-on-primary rounded-full font-label-lg transition-colors"
+                      >
+                        Quay lại
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <div className="text-center py-8 text-on-surface-variant animate-pulse">
                     Đang tải cổng thanh toán...

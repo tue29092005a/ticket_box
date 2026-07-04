@@ -260,67 +260,6 @@ export class InfoService implements OnModuleInit {
     }
     }
 
-    // 5. Lấy số lượng vé động từ Redis (concert:${concert_id}:inventory)
-    const inventoryKey = `concert:${concert_id}:inventory`;
-    let liveInventory: any = this.inventoryCache.get(inventoryKey);
-    
-    if (!liveInventory) {
-      if (this.activePromises.has(inventoryKey)) {
-        liveInventory = await this.activePromises.get(inventoryKey);
-      } else {
-        const promise = (async () => {
-          try {
-            const data = await this.redis.hgetall(inventoryKey);
-            if (data) this.inventoryCache.set(inventoryKey, data);
-            return data || {};
-          } catch (e) {
-            return {}; // Fallback rỗng để tránh văng lỗi 500
-          } finally {
-            this.activePromises.delete(inventoryKey);
-          }
-        })();
-        this.activePromises.set(inventoryKey, promise);
-        liveInventory = await promise;
-      }
-    }
-    
-    // Tính số lượng SVIP khả dụng
-    const svipKey = `concert:${concert_id}:svip_seats`;
-    let svipSeats: any = this.inventoryCache.get(svipKey);
-    if (!svipSeats) {
-      if (this.activePromises.has(svipKey)) {
-        svipSeats = await this.activePromises.get(svipKey);
-      } else {
-        const promise = (async () => {
-          try {
-            const data = await this.redis.hgetall(svipKey);
-            if (data) this.inventoryCache.set(svipKey, data);
-            return data || {};
-          } catch (e) {
-            return {};
-          } finally {
-            this.activePromises.delete(svipKey);
-          }
-        })();
-        this.activePromises.set(svipKey, promise);
-        svipSeats = await promise;
-      }
-    }
-    const bookedSvipCount = Object.keys(svipSeats || {}).length;
-
-    // Clone dữ liệu để không ghi đè vào tham chiếu của Memory/Cache
-    showInfo = JSON.parse(JSON.stringify(showInfo)); 
-    
-    // Merge live inventory vào zones
-    showInfo.zones = showInfo.zones.map((z: any) => {
-      if (z.zone === 'SVIP') {
-        z.availableSlots = Math.max(0, z.totalCapacity - bookedSvipCount);
-      } else if (liveInventory[z.zone] !== undefined) {
-        z.availableSlots = parseInt(liveInventory[z.zone], 10);
-      }
-      return z;
-    });
-
     return showInfo;
   }
 }

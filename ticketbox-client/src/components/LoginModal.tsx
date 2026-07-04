@@ -37,7 +37,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSucce
       if (onSuccess) onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Xác thực thất bại. Vui lòng thử lại.');
+      // Thêm delay 2.5s để mô phỏng "thử lại nhiều lần" (giống payment) khi mạng lag hoặc backend chết
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      if (err.response?.status === 502 || err.response?.status === 504 || err.message === 'Network Error') {
+        setError(err.response?.data?.message || 'Hệ thống đăng nhập đang bảo trì. Bạn có thể xem thông tin nhưng chưa thể đăng nhập lúc này.');
+      } else {
+        setError(err.response?.data?.message || 'Xác thực thất bại. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }

@@ -29,6 +29,7 @@ async function bootstrap() {
     { id: 1, name: 'Anh Trai Say Hi - Live Concert', location: 'Hà Nội', performanceDate: new Date('2026-10-10') },
     { id: 2, name: 'Rap Việt All Star', location: 'TPHCM', performanceDate: new Date('2026-11-20') },
     { id: 3, name: 'Đen Vâu - Show Của Đen', location: 'Đà Nẵng', performanceDate: new Date('2026-12-05') },
+    { id: 4, name: 'Anh Trai "Say Hi" 2025', location: 'Hà Nội', performanceDate: new Date('2026-12-20') },
   ];
 
   const { Concert } = require('../info/entities/concert.entity');
@@ -55,7 +56,7 @@ async function bootstrap() {
     const seatCount = await seatInventoryRepo.count({ where: { concert_id: cData.id } });
     if (seatCount === 0) {
       const seats = [];
-      const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+      const rows = ['A', 'B'];
       const cols = 20;
       for (const row of rows) {
         for (let i = 1; i <= cols; i++) {
@@ -120,6 +121,7 @@ async function bootstrap() {
     { id: '1', name: 'Anh Trai Say Hi - Live Concert', location: 'Hà Nội', date: '2026-10-10' },
     { id: '2', name: 'Rap Việt All Star', location: 'TPHCM', date: '2026-11-20' },
     { id: '3', name: 'Đen Vâu - Show Của Đen', location: 'Đà Nẵng', date: '2026-12-05' },
+    { id: '4', name: 'Anh Trai "Say Hi" 2025', location: 'Hà Nội', date: '2026-12-20' },
   ];
   await index.addDocuments(dummyShows);
   console.log('Đã nạp Dummy Shows vào Meilisearch.');
