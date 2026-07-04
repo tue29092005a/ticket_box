@@ -13,13 +13,13 @@
 #  Login:         ticketbox_admin / ticketbox_secret_2026
 # ─────────────────────────────────────────────────────────────────────────────
 
-@baseUrl     = http://localhost:3004
+@baseUrl     = http://localhost:3333
 @minioUrl    = http://localhost:9000
 @contentType = application/json
 
 # ── Fill these in after running D-01 and the login step ─────────────────────
-@TOKEN    = PASTE_JWT_TOKEN_HERE
-@EVENT_ID = PASTE_EVENT_ID_HERE
+@TOKEN    = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMxMjQ4NTQsImV4cCI6MTc4MzEyNTc1NH0.6iuMEl74oU9B-sroehgdMbCglWptaLAflVu8O2qXjb8
+@EVENT_ID = 3248aa8c-6634-450b-a822-c4d0779c77aa
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  GROUP D — Infrastructure Checks (run FIRST — no auth needed)
@@ -49,11 +49,13 @@ Authorization: AWS ticketbox_admin:ticketbox_secret_2026
 ### AUTH-01: Login
 # Expected: 200 OK with { accessToken, refreshToken }
 # Copy the accessToken value into @TOKEN above
-POST {{baseUrl}}/api/auth/login
-Content-Type: {{contentType}}
+### 2. Login (Copy the access_token from the response into the @token variable above, or rely on REST Client auto-chaining if supported)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
 
 {
-  "email": "organizer@test.com",
+  "email": "organizer@example.com",
   "password": "password123"
 }
 
@@ -88,7 +90,8 @@ Authorization: Bearer {{TOKEN}}
 ###
 
 ### A-01b: Get Presigned URL — cover_image_url
-# Expected: same structure, objectKey uses "cover_image_url" prefix
+# Expected: same structure. The "objectKey" field in the response IS your cover_image_url!
+# Copy the value of "objectKey" to use in A-07.
 GET {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/upload-url?type=cover_image_url&ext=webp
 Authorization: Bearer {{TOKEN}}
 
@@ -128,24 +131,37 @@ GET {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/upload-url?type=image_url&ex
 # Verify: object appears in MinIO Console under ticketbox-images/events/{{EVENT_ID}}/
 # IMPORTANT: For VS Code REST Client, the file must exist locally.
 # Use a small test JPEG (< 5 MB).
-PUT PASTE_PRESIGNED_URL_HERE
+PUT http://localhost:9000/ticketbox-images/events/3248aa8c-6634-450b-a822-c4d0779c77aa/ticket_image_url_b73d15ef.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ticketbox_admin%2F20260704%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260704T003029Z&X-Amz-Expires=900&X-Amz-Signature=d3e494bf9bca1c742b288d47462a18a18f5348bab57a98e804cec40b8bf7c626&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject 
 Content-Type: image/jpeg
 
-< ./tests/test_minio/test_assets/sample_banner.jpg
+< ./tests/test_minio/test_assets/sample_banner1.jpg
 
 ###
 
-### A-03: Upload OVERSIZED file (> 5 MB) — should be rejected by MinIO
-# Expected: 403 Forbidden — { Code: "SignatureDoesNotMatch" }
-# The presigned URL was signed with ContentLength = 5242880 (5 MB max).
-# Any upload where actual bytes differ from signed ContentLength is rejected.
-# Use the same presignedUrl from A-01 but send a file > 5 MB.
-PUT PASTE_PRESIGNED_URL_HERE
+### A-03: Upload OVERSIZED file (> 5 MB) — client-side size check
+# NOTE: ContentLength is NOT baked into the presigned URL signature (fix applied 2026-07-04).
+# Baking ContentLength caused A-02 to fail with SignatureDoesNotMatch for any file not exactly 5MB.
+#
+# Server-side size enforcement approach:
+#   - maxSizeBytes (5242880) is returned in the presigned URL response
+#   - The CLIENT must check: if (file.size > maxSizeBytes) abort before PUT
+#   - Nginx client_max_body_size is set to 0 (unlimited) for /minio/ — MinIO receives the stream
+#
+# To simulate this test:
+#   1. Get a presigned URL from A-01
+#   2. In JavaScript: if (file.size > response.maxSizeBytes) { show error; return; }
+#   3. Confirm the large file is blocked BEFORE the PUT is attempted
+#
+# If you send a > 5 MB file anyway (bypassing client check):
+#   - MinIO will accept it (no server-side size guard on presigned PUT alone)
+#   - This is expected and documented — protect at application layer
+PUT http://localhost:9000/ticketbox-images/events/3248aa8c-6634-450b-a822-c4d0779c77aa/ticket_image_url_77326d73.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ticketbox_admin%2F20260704%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260704T001806Z&X-Amz-Expires=900&X-Amz-Signature=03006137e3309cc08dabfb7a8946add1d54e49ec1253b9944fd87675aa77f2af&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
 Content-Type: image/jpeg
 
 < ./tests/test_minio/test_assets/large_image_6mb.jpg
 
 ###
+
 
 
 # ─── A-05: Expired URL test ────────────────────────────────────────────────────
@@ -166,7 +182,10 @@ Content-Type: image/jpeg
 
 
 # ─── A-07: End-to-End — Use MinIO object key in Step 1 ───────────────────────
-# Pre-condition: A-02 succeeded. Copy the objectKey from A-01 response.
+# Pre-condition: A-02 succeeded.
+# In the payload below:
+# - For "image_url", paste the "objectKey" value you got from the A-01 response.
+# - For "cover_image_url", paste the "objectKey" value you got from the A-01b response.
 
 ### A-07: Save Step 1 with MinIO object key as image_url
 # Expected: 200 OK { event_id, status: "DRAFT", step_completed: 1, next_step: 2 }
@@ -182,8 +201,8 @@ Authorization: Bearer {{TOKEN}}
   "venue_name": "Test Arena",
   "province": "Ho Chi Minh",
   "organizer_name": "MinIO Tester",
-  "image_url": "PASTE_OBJECT_KEY_FROM_A01_HERE",
-  "cover_image_url": "PASTE_COVER_OBJECT_KEY_FROM_A01b_HERE",
+  "image_url": "events/3248aa8c-6634-450b-a822-c4d0779c77aa/ticket_image_url_b73d15ef.png",
+  "cover_image_url": "events/3248aa8c-6634-450b-a822-c4d0779c77aa/cover_image_url_807ef8b4.webp",
   "description": "Testing MinIO image storage integration"
 }
 
@@ -210,7 +229,7 @@ Authorization: Bearer {{TOKEN}}
       "total_quantity": 50,
       "min_per_order": 1,
       "max_per_order": 4,
-      "ticket_image_url": "PASTE_TICKET_OBJECT_KEY_FROM_A01c_HERE"
+      "ticket_image_url": "events/3248aa8c-6634-450b-a822-c4d0779c77aa/ticket_image_url_b865bfbc.png"
     },
     {
       "name": "GA",

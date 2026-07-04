@@ -64,10 +64,14 @@ export class MinioService {
     const objectKey = `events/${eventId}/${type}_${hex8}.${ext.replace(/^\./, '')}`;
 
     try {
+      // Do NOT set ContentLength here.
+      // Setting ContentLength in PutObjectCommand bakes the exact byte count into
+      // the AWS4 signature (X-Amz-SignedHeaders includes 'content-length'), which
+      // means MinIO rejects ANY upload whose Content-Length differs — even by 1 byte.
+      // maxSizeBytes is returned so the client can enforce the limit before uploading.
       const cmd = new PutObjectCommand({
         Bucket: bucket,
         Key: objectKey,
-        ContentLength: maxSize, // Q3: locks the presigned URL to max allowed size
       });
       const presignedUrl = await getSignedUrl(this.s3, cmd, { expiresIn: ttl });
 
@@ -103,10 +107,11 @@ export class MinioService {
     const objectKey = `${showId}/${sponsorId}_${timestamp}.csv`;
 
     try {
+      // ContentLength omitted intentionally — see getImagePresignedUploadUrl for explanation.
+      // Client must check file.size <= maxSizeBytes before calling PUT.
       const cmd = new PutObjectCommand({
         Bucket: bucket,
         Key: objectKey,
-        ContentLength: maxSize,
       });
       const presignedUrl = await getSignedUrl(this.s3, cmd, { expiresIn: ttl });
 
