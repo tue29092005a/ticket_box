@@ -1,0 +1,415 @@
+###
+# ─────────────────────────────────────────────────────────────────────────────
+#  MinIO Phase 2 — CSV Import via MinIO
+#  Phase 3 — Full Regression (Groups A + B + C + D combined)
+#  Phase 4 — Cleanup verification (deprecated endpoints return 410)
+#
+#  VS Code REST Client extension required
+#
+#  PREREQUISITES:
+#   1. docker compose up -d  (all services including MinIO)
+#   2. node src/scripts/setup-minio.js  (buckets already created in Phase 0)
+#   3. npm run start:event  AND  npm run start:guest  (or monolith)
+#   4. DB migration already ran: filePath column renamed to fileKey
+#   5. Fill in @ADMIN_TOKEN and @SHOW_ID below after AUTH-02
+#
+#  MinIO Console: http://localhost:9001
+#  Login:         ticketbox_admin / ticketbox_secret_2026
+# ─────────────────────────────────────────────────────────────────────────────
+
+@baseUrl     = http://localhost:3333
+@minioUrl    = http://localhost:9000
+@contentType = application/json
+
+# ── Fill these in after running AUTH steps ───────────────────────────────────
+@ADMIN_TOKEN = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMxMzIzODYsImV4cCI6MTc4MzEzMzI4Nn0.gByziGR6WaGrYcqJKsm1EMIi2WCOuuc-QDgCQlJeTv4
+@ORG_TOKEN   = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkNzMwMWZmMS0zMzEzLTQ4Y2YtYWIyMy00ZTE2MTlhZWNlMzkiLCJpYXQiOjE3ODMxMjkwNzYsImV4cCI6MTc4MzEyOTk3Nn0.z9y8ei0hg6tcWYlQ7NcGsIHP2_Dsc2yzk9xX88r-cZk
+@SHOW_ID     = 11111111-1111-1111-1111-111111111111
+@SPONSOR_ID  = sponsor-A
+
+# From Phase 1 (if still needed for regression):
+@EVENT_ID    = 3248aa8c-6634-450b-a822-c4d0779c77aa
+
+# Filled in during test run:
+@CSV_PRESIGNED_URL = http://localhost:9000/ticketbox-csv-imports/11111111-1111-1111-1111-111111111111/sponsor-A_1783132414602.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ticketbox_admin%2F20260704%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260704T023334Z&X-Amz-Expires=3600&X-Amz-Signature=d4c611847240d1af4b7a1698a72ffaab5dacb71c0fc63c4522c03b8e70716505&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+@CSV_OBJECT_KEY    = 11111111-1111-1111-1111-111111111111/sponsor-A_1783132414602.csv
+@IMPORT_JOB_ID     = 2899c4e8-0933-4fdf-82d7-30c6d2c44e48
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  AUTH
+# ─────────────────────────────────────────────────────────────────────────────
+
+### AUTH-01: Login as Organizer
+# Copy accessToken → @ORG_TOKEN
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "organizer@example.com",
+  "password": "password123"
+}
+
+###
+
+### AUTH-02: Login as Admin
+# Copy accessToken → @ADMIN_TOKEN
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@ticketbox.dev",
+  "password": "password123"
+}
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GROUP B — CSV Import via MinIO (Phase 2 new functionality)
+# ─────────────────────────────────────────────────────────────────────────────
+
+### B-01: Get CSV Presigned Upload URL (Happy Path)
+# Expected: 200 OK
+# {
+#   "presignedUrl": "http://localhost:9000/ticketbox-csv-imports/...",
+#   "objectKey":    "{{SHOW_ID}}/sponsor-A_<timestamp_ms>.csv",
+#   "expiresIn":    3600,
+#   "maxSizeBytes": 524288000
+# }
+# IMPORTANT: Copy presignedUrl → @CSV_PRESIGNED_URL
+#            Copy objectKey    → @CSV_OBJECT_KEY
+GET {{baseUrl}}/api/admin/guests/csv-upload-url?showId={{SHOW_ID}}&sponsorId={{SPONSOR_ID}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###
+
+### B-01-UNAUTH: CSV Presigned URL — Unauthenticated
+# Expected: 401 Unauthorized
+GET {{baseUrl}}/api/admin/guests/csv-upload-url?showId={{SHOW_ID}}&sponsorId={{SPONSOR_ID}}
+
+###
+
+
+# ─── B-02: Upload CSV to MinIO ────────────────────────────────────────────────
+# Replace the URL below with presignedUrl from B-01
+
+### B-02a: Upload valid CSV via presigned URL
+# Expected: 200 OK (empty body from MinIO)
+# Verify: object visible in MinIO Console under ticketbox-csv-imports/{{SHOW_ID}}/
+PUT {{CSV_PRESIGNED_URL}}
+Content-Type: text/csv
+
+< ./tests/test_minio/test_assets/vip_guests_valid.csv
+
+###
+
+### B-02b: Upload partial-error CSV (for B-06 test)
+# Use a SEPARATE presigned URL (call B-01 again first for a new key!)
+PUT http://localhost:9000/ticketbox-csv-imports/11111111-1111-1111-1111-111111111111/sponsor-A_1783131458923.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ticketbox_admin%2F20260704%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260704T021738Z&X-Amz-Expires=3600&X-Amz-Signature=41800f3fc80b36a63d430b2194852481472a41f314310706e1ee1b04cf3427d3&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+Content-Type: text/csv
+
+< ./tests/test_minio/test_assets/vip_guests_partial_error.csv
+
+###
+
+### B-02c: Upload a plain .txt file (for B-07 test — wrong file type)
+# Use a THIRD presigned URL (call B-01 again)
+PUT http://localhost:9000/ticketbox-csv-imports/11111111-1111-1111-1111-111111111111/sponsor-A_1783131497529.csv?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=ticketbox_admin%2F20260704%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260704T021817Z&X-Amz-Expires=3600&X-Amz-Signature=c6ee6325a4037d4746bf441d5fe5afca744a7f84cc4ec6ce615f4355e229eae7&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+Content-Type: text/csv
+
+< ./tests/test_minio/test_assets/not_a_csv.txt
+
+###
+
+
+### B-03: Trigger Import Job — Happy Path
+# Pre-condition: B-02a succeeded. Paste objectKey from B-01 as fileKey.
+# Expected: 202 Accepted { message: "Import task queued successfully", job_id: "<UUID>" }
+# Copy job_id → @IMPORT_JOB_ID
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: {{contentType}}
+
+{
+  "fileKey": "11111111-1111-1111-1111-111111111111/sponsor-A_1783131414529.csv",
+  "showId":  "{{SHOW_ID}}",
+  "sponsorId": "{{SPONSOR_ID}}"
+}
+
+###
+
+### B-04: Poll Import Job Until Completion
+# Run repeatedly every 2 seconds until status ≠ PENDING / PROCESSING
+# Expected final state:
+# {
+#   "status": "COMPLETED",
+#   "totalRows": 2,
+#   "successCount": 2,
+#   "errorCount": 0,
+#   "errorDetails": []
+# }
+# Verify in MinIO Console: object tagged status=archived
+#          archived copy at: {{SHOW_ID}}/archived/<filename>
+GET {{baseUrl}}/api/admin/imports/{{IMPORT_JOB_ID}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###
+
+### B-05: Duplicate Import — Idempotency Guard
+# Pre-condition: B-03 completed. Resend EXACT same request.
+# Expected: 409 Conflict
+# {
+#   "message": "This file has already been queued for this show and sponsor.",
+#   "job_id": "<UUID of original job>",
+#   "status": "COMPLETED"
+# }
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: {{contentType}}
+
+{
+  "fileKey": "{{CSV_OBJECT_KEY}}",
+  "showId":  "{{SHOW_ID}}",
+  "sponsorId": "{{SPONSOR_ID}}"
+}
+
+###
+
+### B-06: CSV with Row-Level Errors (Partial Success)
+# Pre-condition: B-02b uploaded vip_guests_partial_error.csv. Use its objectKey.
+# Expected final state after polling B-04:
+# { "status": "COMPLETED", "totalRows": 2, "successCount": 1, "errorCount": 1 }
+# errorDetails[0] should describe row 2 missing email
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: {{contentType}}
+
+{
+  "fileKey": "PASTE_OBJECT_KEY_FROM_B02b",
+  "showId":  "{{SHOW_ID}}",
+  "sponsorId": "{{SPONSOR_ID}}"
+}
+
+###
+
+### B-07: Wrong File Type (.txt uploaded as CSV)
+# Pre-condition: B-02c uploaded not_a_csv.txt. Use its objectKey.
+# Expected: Job reaches COMPLETED but successCount=0, all rows in errorDetails
+# OR job reaches FAILED if csv-parser throws on non-CSV content
+# Worker must NOT crash — it continues listening after handling the error.
+POST {{baseUrl}}/api/admin/guests/import
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: {{contentType}}
+
+{
+  "fileKey": "PASTE_OBJECT_KEY_FROM_B02c",
+  "showId":  "{{SHOW_ID}}",
+  "sponsorId": "{{SPONSOR_ID}}"
+}
+
+###
+
+### B-08: MinIO Unavailable — Presigned URL Returns 503
+# Step 1: Stop MinIO:  docker stop ticketbox-minio
+# Step 2: Run this request
+# Expected: 503 Service Unavailable { error: "Storage service unavailable" }
+# Step 3: Restart MinIO:  docker start ticketbox-minio
+GET {{baseUrl}}/api/admin/guests/csv-upload-url?showId={{SHOW_ID}}&sponsorId={{SPONSOR_ID}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###
+
+### B-09: MinIO Unavailable — Worker Handles Graceful Failure
+# Step 1: Queue an import job (B-03 with a fresh fileKey)
+# Step 2: Stop MinIO BEFORE the worker picks it up:  docker stop ticketbox-minio
+# Step 3: Poll B-04 — expect job status → FAILED
+# Step 4: Check worker logs — it must still be alive (no crash)
+#   docker compose logs apps-worker --tail=20
+# Step 5: Restart MinIO: docker start ticketbox-minio
+# Step 6: Queue a new job and confirm it processes successfully
+
+### B-10: List All Import Jobs
+# Expected: 200 OK — array of jobs, newest first
+GET {{baseUrl}}/api/admin/imports
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###
+
+### B-11: List Import Jobs Filtered by showId
+# Expected: 200 OK — only jobs for {{SHOW_ID}}
+GET {{baseUrl}}/api/admin/imports?showId={{SHOW_ID}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GROUP A — Regression: Image Presigned URL (Phase 1 endpoints still working)
+# ─────────────────────────────────────────────────────────────────────────────
+
+### A-01: Get Presigned URL — image_url (Regression)
+# Expected: 200 OK with presignedUrl, objectKey, expiresIn:900, maxSizeBytes:5242880
+GET {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/upload-url?type=image_url&ext=jpg
+Authorization: Bearer {{ORG_TOKEN}}
+
+###
+
+### A-04: Rejected MIME Type — should return 400 (Regression)
+# Expected: 400 Bad Request
+GET {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/upload-url?type=bad_type&ext=exe
+Authorization: Bearer {{ORG_TOKEN}}
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GROUP C — Regression: Existing Event Wizard (must be unaffected)
+# ─────────────────────────────────────────────────────────────────────────────
+
+### C-01: Full Draft Wizard — Step 1 with MinIO object key
+# Expected: 200 OK { step_completed: 1, next_step: 2 }
+PUT {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/step/1
+Content-Type: {{contentType}}
+Authorization: Bearer {{ORG_TOKEN}}
+
+{
+  "name": "Regression Test Concert",
+  "category": "Music",
+  "address_type": "OFFLINE",
+  "venue_name": "Test Arena",
+  "province": "Ho Chi Minh",
+  "organizer_name": "Regression Tester",
+  "image_url": "events/{{EVENT_ID}}/image_url_94bd13af.jpg",
+  "cover_image_url": "events/{{EVENT_ID}}/cover_image_url_e662beda.webp",
+  "description": "Phase 3 regression test"
+}
+
+###
+
+### C-02: Public Event List — image_url must be MinIO key (not /uploads/ path)
+# Expected: 200 OK, events have image_url starting with "events/" not "/uploads/"
+GET {{baseUrl}}/api/concerts?page=1&limit=5
+
+###
+
+### C-03: Admin Update Event with MinIO Image URL
+# Expected: 200 OK, Redis cache invalidated
+PUT {{baseUrl}}/api/admin/concerts/{{EVENT_ID}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{ADMIN_TOKEN}}
+
+{
+  "image_url": "events/{{EVENT_ID}}/image_url_regression_test.jpg"
+}
+
+###
+
+### C-04: Get Draft — image_url must be persisted MinIO key
+# Expected: step_1.image_url = MinIO object key string
+GET {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/draft
+Authorization: Bearer {{ORG_TOKEN}}
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  GROUP D — Infrastructure Verification
+# ─────────────────────────────────────────────────────────────────────────────
+
+### D-01: MinIO Health Check
+# Expected: 200 OK
+GET {{minioUrl}}/minio/health/live
+
+###
+
+### D-02: MinIO Console Access (manual)
+# Open in browser: http://localhost:9001
+# Login: ticketbox_admin / ticketbox_secret_2026
+# Verify:
+#   - ticketbox-images bucket contains uploaded images from Phase 1
+#   - ticketbox-csv-imports bucket contains:
+#       - processed CSVs tagged status=archived
+#       - archived copies at {{SHOW_ID}}/archived/...
+#       - error files tagged status=error (from B-06, B-07)
+
+### D-03: Container Restart Persistence
+# 1. Note an objectKey from B-04 verification
+# 2. Run: docker compose restart ticketbox-minio
+# 3. Check http://localhost:9001 — object must still exist
+# (Terminal command — not REST Client)
+
+### D-04: Nginx Proxy to MinIO (through port 3000)
+# Expected: 200 OK through Nginx /minio/ proxy
+GET http://localhost:3000/minio/minio/health/live
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PHASE 4 — Cleanup Verification
+#  Deprecated endpoints now return 410 Gone
+# ─────────────────────────────────────────────────────────────────────────────
+
+### CLEANUP-01: Old local-disk upload endpoint — must return 410 Gone
+# Expected: 410 Gone
+# {
+#   "message": "Local-disk image upload has been removed.
+#               Use GET /api/organizer/concerts/:id/upload-url to obtain a MinIO presigned upload URL."
+# }
+POST {{baseUrl}}/api/organizer/concerts/{{EVENT_ID}}/upload
+Authorization: Bearer {{ORG_TOKEN}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="test.jpg"
+Content-Type: image/jpeg
+
+(binary data here — any file)
+------WebKitFormBoundary--
+
+###
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  PHASE 3 CHECKLIST — Sign-off Criteria
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#  Before signing off, confirm ALL of the following:
+#
+#  Group A (Image Presigned URL):
+#    [x] A-01  Presigned URL generated with correct structure (X-Amz-SignedHeaders=host only)
+#    [x] A-04  Invalid type param returns 400 (MIME enforcement)
+#    [x] A-06  Unauthenticated returns 401
+#    [x] A-07  Step 1 saves MinIO object key as image_url in MongoDB
+#    [x] A-05  Expired URL returns 403 (manual TTL reduction test)
+#
+#  Group B (CSV Import):
+#    [ ] B-01  CSV presigned URL generated (expiresIn=3600, maxSizeBytes=524288000)
+#    [ ] B-02  CSV uploaded to MinIO successfully
+#    [ ] B-03  Import job queued (202 Accepted)
+#    [ ] B-04  Job completes: status=COMPLETED, successCount=2, errorCount=0
+#    [ ] B-04v MinIO Console: file tagged status=archived, copy in archived/ prefix
+#    [ ] B-05  Duplicate import returns 409 Conflict
+#    [ ] B-06  Partial error CSV: 1 success, 1 error in errorDetails
+#    [ ] B-07  Wrong file type: job FAILED or COMPLETED with all-error rows
+#    [ ] B-08  MinIO offline: presigned URL endpoint returns 503
+#    [ ] B-09  MinIO offline: worker marks job FAILED, worker keeps running
+#    [ ] B-10  List jobs returns all jobs newest-first
+#    [ ] B-11  Filter by showId returns only matching jobs
+#
+#  Group C (Regression):
+#    [ ] C-01  Steps 1-4 wizard unaffected
+#    [ ] C-02  Public event list — image_url is MinIO key, not /uploads/ path
+#    [ ] C-03  Admin update event with MinIO key succeeds
+#    [ ] C-04  Draft retrieval — MinIO key persisted in MongoDB
+#
+#  Group D (Infrastructure):
+#    [ ] D-01  MinIO health 200 OK
+#    [ ] D-03  Volume persistence after container restart
+#    [ ] D-04  Nginx /minio/ proxy route works
+#
+#  Phase 4 (Cleanup):
+#    [ ] CLEANUP-01  Old upload endpoint returns 410 Gone
+#
+###

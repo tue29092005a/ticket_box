@@ -27,9 +27,15 @@ export class ImportJob {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  /** Filename (relative to uploads/VIP_CSV/inbox/) */
-  @Column({ type: 'varchar', length: 500 })
-  filePath: string;
+  /**
+   * MinIO object key in the ticketbox-csv-imports bucket.
+   * Format: {showId}/{sponsorId}_{timestamp_ms}.csv
+   *
+   * @deprecated filePath column renamed to fileKey in MinIO migration (2026-07-04).
+   * Migration SQL: ALTER TABLE import_jobs RENAME COLUMN "filePath" TO "fileKey";
+   */
+  @Column({ name: 'fileKey', type: 'varchar', length: 500 })
+  fileKey: string;
 
   @Column({ type: 'uuid' })
   showId: string;
@@ -55,8 +61,10 @@ export class ImportJob {
   errorDetails: ImportRowError[];
 
   /**
-   * SHA256(filePath + showId + sponsorId) — prevents duplicate processing
+   * SHA256(fileKey + showId + sponsorId) — prevents duplicate processing
    * of the same file for the same show+sponsor combination.
+   * Note: fileKey includes a ms timestamp, so re-uploading the same CSV
+   * produces a new key and a new import job — this is intentional.
    */
   @Column({ type: 'varchar', length: 64, unique: true })
   idempotencyKey: string;

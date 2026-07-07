@@ -27,10 +27,13 @@ export class GuestService {
   /**
    * Validates idempotency, persists the import_jobs record, and publishes
    * to RabbitMQ. Returns immediately with 202 — the worker handles the rest.
+   *
+   * @param fileKey MinIO object key (e.g. "showId/sponsorId_timestamp.csv")
+   *                or legacy local filePath for backward compatibility.
    */
-  async enqueueImport(filePath: string, showId: string, sponsorId: string) {
+  async enqueueImport(fileKey: string, showId: string, sponsorId: string) {
     const idempotencyKey = createHash('sha256')
-      .update(`${filePath}${showId}${sponsorId}`)
+      .update(`${fileKey}${showId}${sponsorId}`)
       .digest('hex');
 
     // Guard: same file for same show+sponsor is only processed once
@@ -44,7 +47,7 @@ export class GuestService {
     }
 
     const job = this.importJobRepo.create({
-      filePath,
+      fileKey,
       showId,
       sponsorId,
       idempotencyKey,
@@ -54,11 +57,11 @@ export class GuestService {
 
     this.rabbitChannel.sendToQueue(
       VIP_IMPORT_QUEUE,
-      Buffer.from(JSON.stringify({ jobId: job.id, filePath, showId, sponsorId })),
+      Buffer.from(JSON.stringify({ jobId: job.id, fileKey, showId, sponsorId })),
       { persistent: true },
     );
 
-    this.logger.log(`Import job ${job.id} queued for sponsor=${sponsorId}, show=${showId}, file=${filePath}`);
+    this.logger.log(`Import job ${job.id} queued for sponsor=${sponsorId}, show=${showId}, fileKey=${fileKey}`);
     return { message: 'Import task queued successfully', job_id: job.id };
   }
 
@@ -69,7 +72,7 @@ export class GuestService {
 
     return {
       id:           job.id,
-      filePath:     job.filePath,
+      fileKey:      job.fileKey,
       showId:       job.showId,
       sponsorId:    job.sponsorId,
       status:       job.status,

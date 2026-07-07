@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   NotFoundException,
   ConflictException,
+  GoneException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -12,8 +13,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import Redis from 'ioredis';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as crypto from 'crypto';
 
 import { REDIS_CLIENT } from '../config/redis.config';
@@ -29,7 +28,6 @@ import { SaveStep3Dto } from './dto/save-step3.dto';
 import { SaveStep4Dto } from './dto/save-step4.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
 @Injectable()
 export class EventService {
@@ -43,11 +41,7 @@ export class EventService {
     @InjectRepository(SeatInventory) private readonly seatRepo: Repository<SeatInventory>,
     @InjectModel(ShowInfo.name) private readonly showInfoModel: Model<ShowInfoDocument>,
     private readonly dataSource: DataSource,
-  ) {
-    if (!fs.existsSync(UPLOADS_DIR)) {
-      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-    }
-  }
+  ) {}
 
   async createDraft(organizerId: string) {
     const concert = this.concertRepo.create({
@@ -191,14 +185,16 @@ export class EventService {
     };
   }
 
-  async saveImageFile(eventId: string, file: Express.Multer.File, type: string): Promise<{ url: string; type: string }> {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const filename = `${eventId}_${type}_${crypto.randomBytes(6).toString('hex')}${ext}`;
-    const dest = path.join(UPLOADS_DIR, filename);
-    fs.writeFileSync(dest, file.buffer);
-    const url = `/uploads/${filename}`;
-    this.logger.log(`Saved upload: ${url}`);
-    return { url, type };
+  /**
+   * @deprecated — Phase 4 cleanup complete.
+   * The local-disk upload path has been removed. Use the MinIO presigned URL endpoint:
+   * GET /api/organizer/concerts/:id/upload-url?type=<type>&ext=<ext>
+   * This method is retained only so the deprecated controller endpoint compiles.
+   */
+  async saveImageFile(_eventId: string, _file: Express.Multer.File, _type: string): Promise<{ url: string; type: string }> {
+    throw new GoneException(
+      'Local-disk image upload has been removed. Use GET /api/organizer/concerts/:id/upload-url to obtain a MinIO presigned upload URL.',
+    );
   }
 
   async getEventList(page = 1, limit = 20) {

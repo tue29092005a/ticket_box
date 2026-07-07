@@ -1,7 +1,8 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 import { Invoice } from './invoice.entity';
 
 @Entity('tickets')
+@Unique(['showId', 'seatNo'])
 export class Ticket {
   @PrimaryGeneratedColumn('uuid')
   id: string;
