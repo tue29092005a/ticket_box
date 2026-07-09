@@ -54,7 +54,12 @@ export default {
         "surface-container-low": "#1c1b1b",
         "tertiary-fixed-dim": "#edb1ff",
         "surface-tint": "#54dda9",
-        "on-error": "#690005"
+        "on-error": "#690005",
+        "text-high-emphasis": "#FFFFFF",
+        "text-medium-emphasis": "#A0A0A0",
+        "input-level-2": "#2D2D2D",
+        "card-level-1": "#1A1A1A",
+        "error-red": "#EF4444"
       },
       borderRadius: {
         DEFAULT: "0.25rem",

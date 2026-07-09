@@ -1,0 +1,235 @@
+﻿
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: test/k6-worker.js
+        output: -
+
+     scenarios: (100.00%) 3 scenarios, 3 max VUs, 1m30s max duration (incl. graceful stop):
+              * ga_rollback: 1 iterations shared among 1 VUs (maxDuration: 1m0s, exec: testGARollback, gracefulStop: 30s)
+              * quota_restore: 1 iterations shared among 1 VUs (maxDuration: 1m0s, exec: testQuotaRestore, gracefulStop: 30s)
+              * svip_rollback: 1 iterations shared among 1 VUs (maxDuration: 1m0s, exec: testSVIPRollback, gracefulStop: 30s)
+
+
+running (0m01.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m01.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m01.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m01.0s/1m0s  0/1 shared iters
+
+running (0m02.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m02.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m02.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m02.0s/1m0s  0/1 shared iters
+
+running (0m03.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m03.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m03.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m03.0s/1m0s  0/1 shared iters
+
+running (0m04.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m04.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m04.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m04.0s/1m0s  0/1 shared iters
+
+running (0m05.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m05.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m05.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m05.0s/1m0s  0/1 shared iters
+
+running (0m06.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m06.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m06.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m06.0s/1m0s  0/1 shared iters
+
+running (0m07.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m07.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m07.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m07.0s/1m0s  0/1 shared iters
+
+running (0m08.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m08.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m08.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m08.0s/1m0s  0/1 shared iters
+
+running (0m09.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m09.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m09.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m09.0s/1m0s  0/1 shared iters
+
+running (0m10.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m10.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m10.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m10.0s/1m0s  0/1 shared iters
+
+running (0m11.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m11.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m11.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m11.0s/1m0s  0/1 shared iters
+
+running (0m12.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m12.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m12.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m12.0s/1m0s  0/1 shared iters
+
+running (0m13.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m13.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m13.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m13.0s/1m0s  0/1 shared iters
+
+running (0m14.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m14.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m14.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m14.0s/1m0s  0/1 shared iters
+
+running (0m15.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m15.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m15.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m15.0s/1m0s  0/1 shared iters
+
+running (0m16.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m16.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m16.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m16.0s/1m0s  0/1 shared iters
+
+running (0m17.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m17.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m17.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m17.0s/1m0s  0/1 shared iters
+
+running (0m18.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m18.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m18.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m18.0s/1m0s  0/1 shared iters
+
+running (0m19.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m19.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m19.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m19.0s/1m0s  0/1 shared iters
+
+running (0m20.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m20.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m20.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m20.0s/1m0s  0/1 shared iters
+
+running (0m21.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m21.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m21.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m21.0s/1m0s  0/1 shared iters
+
+running (0m22.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m22.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m22.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m22.0s/1m0s  0/1 shared iters
+
+running (0m23.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m23.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m23.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m23.0s/1m0s  0/1 shared iters
+
+running (0m24.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m24.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m24.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m24.0s/1m0s  0/1 shared iters
+
+running (0m25.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m25.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m25.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m25.0s/1m0s  0/1 shared iters
+
+running (0m26.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m26.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m26.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m26.0s/1m0s  0/1 shared iters
+
+running (0m27.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m27.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m27.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m27.0s/1m0s  0/1 shared iters
+
+running (0m28.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m28.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m28.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m28.0s/1m0s  0/1 shared iters
+
+running (0m29.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m29.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m29.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m29.0s/1m0s  0/1 shared iters
+
+running (0m30.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m30.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m30.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m30.0s/1m0s  0/1 shared iters
+
+running (0m31.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m31.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m31.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m31.0s/1m0s  0/1 shared iters
+
+running (0m32.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m32.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m32.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m32.0s/1m0s  0/1 shared iters
+
+running (0m33.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m33.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m33.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m33.0s/1m0s  0/1 shared iters
+
+running (0m34.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m34.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m34.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m34.0s/1m0s  0/1 shared iters
+
+running (0m35.0s), 3/3 VUs, 0 complete and 0 interrupted iterations
+ga_rollback     [   0% ] 1 VUs  0m35.0s/1m0s  0/1 shared iters
+quota_restore   [   0% ] 1 VUs  0m35.0s/1m0s  0/1 shared iters
+svip_rollback   [   0% ] 1 VUs  0m35.0s/1m0s  0/1 shared iters
+
+
+  Γûê THRESHOLDS 
+
+    checks
+    Γ£ù 'rate>0.99' rate=75.00%
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 4      0.113505/s
+    checks_succeeded...: 75.00% 3 out of 4
+    checks_failed......: 25.00% 1 out of 4
+
+    Γ£ô quota exceeded check
+    Γ£ô SVIP seat is available again
+    Γ£ô GA inventory rolled back
+    Γ£ù quota restored
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 1
+
+    HTTP
+    http_req_duration..............: avg=40.2ms  min=3.72ms med=23.71ms max=99.03ms p(90)=93.04ms p(95)=94.84ms
+      { expected_response:true }...: avg=54.63ms min=3.72ms med=64.44ms max=99.03ms p(90)=94.24ms p(95)=96.64ms
+    http_req_failed................: 40.00% 6 out of 15
+    http_reqs......................: 15     0.425642/s
+
+    EXECUTION
+    iteration_duration.............: avg=35.21s  min=35.2s  med=35.2s   max=35.24s  p(90)=35.23s  p(95)=35.23s 
+    iterations.....................: 3      0.085128/s
+    vus............................: 3      min=3       max=3
+    vus_max........................: 3      min=3       max=3
+
+    NETWORK
+    data_received..................: 6.7 kB 189 B/s
+    data_sent......................: 3.7 kB 106 B/s
+
+
+
+
+running (0m35.2s), 0/3 VUs, 3 complete and 0 interrupted iterations
+ga_rollback   Γ£ô [ 100% ] 1 VUs  0m35.2s/1m0s  1/1 shared iters
+quota_restore Γ£ô [ 100% ] 1 VUs  0m35.2s/1m0s  1/1 shared iters
+svip_rollback Γ£ô [ 100% ] 1 VUs  0m35.2s/1m0s  1/1 shared iters

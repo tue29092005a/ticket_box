@@ -1,0 +1,253 @@
+﻿
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: test/k6-info-service.js
+        output: -
+
+     scenarios: (100.00%) 4 scenarios, 1200 max VUs, 10m30s max duration (incl. graceful stop):
+              * not_found_show: 100 iterations shared among 100 VUs (maxDuration: 10m0s, exec: getNotFoundShow, gracefulStop: 30s)
+              * schema_validation: 100 iterations shared among 100 VUs (maxDuration: 10m0s, exec: validateSchema, gracefulStop: 30s)
+              * show_detail: 500 looping VUs for 30s (exec: getShowDetail, gracefulStop: 30s)
+              * show_list: 500 looping VUs for 30s (exec: getShowList, gracefulStop: 30s)
+
+
+running (00m00.6s), 1110/1200 VUs, 90 complete and 0 interrupted iterations
+not_found_show      [  34% ] 100 VUs  00m00.6s/10m0s  034/100 shared iters
+schema_validation   [  56% ] 100 VUs  00m00.6s/10m0s  056/100 shared iters
+show_detail         [   2% ] 500 VUs  00.6s/30s      
+show_list           [   2% ] 500 VUs  00.6s/30s      
+
+running (00m01.6s), 1001/1200 VUs, 630 complete and 0 interrupted iterations
+not_found_show      [  99% ] 100 VUs  00m01.6s/10m0s  099/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [   5% ] 500 VUs  01.6s/30s      
+show_list           [   5% ] 500 VUs  01.6s/30s      
+
+running (00m02.6s), 1000/1200 VUs, 1173 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [   9% ] 500 VUs  02.6s/30s      
+show_list           [   9% ] 500 VUs  02.6s/30s      
+
+running (00m03.6s), 1000/1200 VUs, 1748 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  12% ] 500 VUs  03.6s/30s      
+show_list           [  12% ] 500 VUs  03.6s/30s      
+
+running (00m04.6s), 1000/1200 VUs, 2193 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  15% ] 500 VUs  04.6s/30s      
+show_list           [  15% ] 500 VUs  04.6s/30s      
+
+running (00m05.6s), 1000/1200 VUs, 2752 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  19% ] 500 VUs  05.6s/30s      
+show_list           [  19% ] 500 VUs  05.6s/30s      
+
+running (00m06.6s), 1000/1200 VUs, 3245 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  22% ] 500 VUs  06.6s/30s      
+show_list           [  22% ] 500 VUs  06.6s/30s      
+
+running (00m07.6s), 1000/1200 VUs, 3751 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  25% ] 500 VUs  07.6s/30s      
+show_list           [  25% ] 500 VUs  07.6s/30s      
+
+running (00m08.6s), 1000/1200 VUs, 4337 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  29% ] 500 VUs  08.6s/30s      
+show_list           [  29% ] 500 VUs  08.6s/30s      
+
+running (00m09.6s), 1000/1200 VUs, 4875 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  32% ] 500 VUs  09.6s/30s      
+show_list           [  32% ] 500 VUs  09.6s/30s      
+
+running (00m10.6s), 1000/1200 VUs, 5328 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  35% ] 500 VUs  10.6s/30s      
+show_list           [  35% ] 500 VUs  10.6s/30s      
+
+running (00m11.6s), 1000/1200 VUs, 5935 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  39% ] 500 VUs  11.6s/30s      
+show_list           [  39% ] 500 VUs  11.6s/30s      
+
+running (00m12.6s), 1000/1200 VUs, 6485 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  42% ] 500 VUs  12.6s/30s      
+show_list           [  42% ] 500 VUs  12.6s/30s      
+
+running (00m13.6s), 1000/1200 VUs, 7006 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  45% ] 500 VUs  13.6s/30s      
+show_list           [  45% ] 500 VUs  13.6s/30s      
+
+running (00m14.6s), 1000/1200 VUs, 7596 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  49% ] 500 VUs  14.6s/30s      
+show_list           [  49% ] 500 VUs  14.6s/30s      
+
+running (00m15.6s), 1000/1200 VUs, 8119 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  52% ] 500 VUs  15.6s/30s      
+show_list           [  52% ] 500 VUs  15.6s/30s      
+
+running (00m16.6s), 1000/1200 VUs, 8652 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  55% ] 500 VUs  16.6s/30s      
+show_list           [  55% ] 500 VUs  16.6s/30s      
+
+running (00m17.6s), 1000/1200 VUs, 9344 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  59% ] 500 VUs  17.6s/30s      
+show_list           [  59% ] 500 VUs  17.6s/30s      
+
+running (00m18.6s), 1000/1200 VUs, 10006 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  62% ] 500 VUs  18.6s/30s      
+show_list           [  62% ] 500 VUs  18.6s/30s      
+
+running (00m19.6s), 1000/1200 VUs, 10507 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  65% ] 500 VUs  19.6s/30s      
+show_list           [  65% ] 500 VUs  19.6s/30s      
+
+running (00m20.6s), 1000/1200 VUs, 11149 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  69% ] 500 VUs  20.6s/30s      
+show_list           [  69% ] 500 VUs  20.6s/30s      
+
+running (00m21.6s), 1000/1200 VUs, 11932 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  72% ] 500 VUs  21.6s/30s      
+show_list           [  72% ] 500 VUs  21.6s/30s      
+
+running (00m22.6s), 1000/1200 VUs, 12579 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  75% ] 500 VUs  22.6s/30s      
+show_list           [  75% ] 500 VUs  22.6s/30s      
+
+running (00m23.6s), 1000/1200 VUs, 13370 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  79% ] 500 VUs  23.6s/30s      
+show_list           [  79% ] 500 VUs  23.6s/30s      
+
+running (00m24.6s), 1000/1200 VUs, 14037 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  82% ] 500 VUs  24.6s/30s      
+show_list           [  82% ] 500 VUs  24.6s/30s      
+
+running (00m25.6s), 1000/1200 VUs, 14996 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  85% ] 500 VUs  25.6s/30s      
+show_list           [  85% ] 500 VUs  25.6s/30s      
+
+running (00m26.6s), 1000/1200 VUs, 15875 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  89% ] 500 VUs  26.6s/30s      
+show_list           [  89% ] 500 VUs  26.6s/30s      
+
+running (00m27.6s), 1000/1200 VUs, 16795 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  92% ] 500 VUs  27.6s/30s      
+show_list           [  92% ] 500 VUs  27.6s/30s      
+
+running (00m28.6s), 1000/1200 VUs, 17505 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  95% ] 500 VUs  28.6s/30s      
+show_list           [  95% ] 500 VUs  28.6s/30s      
+
+running (00m29.6s), 1000/1200 VUs, 18335 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail         [  99% ] 500 VUs  29.6s/30s      
+show_list           [  99% ] 500 VUs  29.6s/30s      
+
+running (00m30.6s), 0551/1200 VUs, 19038 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail       Γåô [ 100% ] 500 VUs  30s            
+show_list         Γåô [ 100% ] 500 VUs  30s            
+
+
+  Γûê THRESHOLDS 
+
+    http_req_duration
+    Γ£ù 'p(95)<200' p(95)=1.97s
+
+    http_req_failed
+    Γ£ù 'rate<0.001' rate=18.06%
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 29430  947.284506/s
+    checks_succeeded...: 82.01% 24136 out of 29430
+    checks_failed......: 17.98% 5294 out of 29430
+
+    Γ£ù status is 200
+      Γå│  82% ΓÇö Γ£ô 16016 / Γ£ù 3473
+    Γ£ô status is 404 or empty (not 500)
+    Γ£ù response is array
+      Γå│  82% ΓÇö Γ£ô 7997 / Γ£ù 1744
+    Γ£ù has required fields
+      Γå│  23% ΓÇö Γ£ô 23 / Γ£ù 77
+
+    HTTP
+    http_req_duration..............: avg=536.14ms min=0s       med=321.58ms max=4.75s p(90)=1.23s p(95)=1.97s
+      { expected_response:true }...: avg=636.82ms min=3.2ms    med=406.48ms max=4.75s p(90)=1.36s p(95)=2.19s
+    http_req_failed................: 18.06% 3538 out of 19589
+    http_reqs......................: 19589  630.525185/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.56s    min=103.77ms med=1.36s    max=5.76s p(90)=2.24s p(95)=2.97s
+    iterations.....................: 19589  630.525185/s
+    vus............................: 551    min=551           max=1118
+    vus_max........................: 1200   min=1200          max=1200
+
+    NETWORK
+    data_received..................: 26 MB  827 kB/s
+    data_sent......................: 1.4 MB 47 kB/s
+
+
+
+
+running (00m31.1s), 0000/1200 VUs, 19589 complete and 0 interrupted iterations
+not_found_show    Γ£ô [ 100% ] 100 VUs  00m01.8s/10m0s  100/100 shared iters
+schema_validation Γ£ô [ 100% ] 100 VUs  00m01.5s/10m0s  100/100 shared iters
+show_detail       Γ£ô [ 100% ] 500 VUs  30s            
+show_list         Γ£ô [ 100% ] 500 VUs  30s            

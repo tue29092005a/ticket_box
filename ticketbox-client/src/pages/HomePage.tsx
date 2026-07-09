@@ -77,7 +77,10 @@ export const HomePage: React.FC = () => {
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a className="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1 font-label-md text-label-md" href="#">Home</a>
-            <a className="text-on-primary-container/80 font-label-md text-label-md hover:text-white transition-colors" href="#">Create Event</a>
+            <button onClick={() => navigate('/organizer')} className="bg-on-primary-fixed text-primary px-5 py-2 rounded-full font-bold hover:bg-white transition-all flex items-center gap-2 shadow-md text-label-md">
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              Tạo sự kiện
+            </button>
             <a className="text-on-primary-container/80 font-label-md text-label-md hover:text-white transition-colors" href="#">My Tickets</a>
             <div className="flex items-center gap-4 ml-4">
               {user ? (
