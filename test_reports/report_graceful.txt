@@ -1,0 +1,68 @@
+﻿
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: test/k6-graceful-degradation.js
+        output: -
+
+     scenarios: (100.00%) 6 scenarios, 60 max VUs, 10m30s max duration (incl. graceful stop):
+              * auth_down: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testAuthDown, gracefulStop: 30s)
+              * auth_down_info_works: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testAuthDownInfoWorks, gracefulStop: 30s)
+              * booking_down: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testBookingDown, gracefulStop: 30s)
+              * booking_down_info_works: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testBookingDownInfoWorks, gracefulStop: 30s)
+              * cors_on_error: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testCorsOnError, gracefulStop: 30s)
+              * info_down: 10 iterations shared among 10 VUs (maxDuration: 10m0s, exec: testInfoDown, gracefulStop: 30s)
+
+
+
+  Γûê THRESHOLDS 
+
+    checks
+    Γ£ù 'rate>0.99' rate=0.00%
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 90      1800.442909/s
+    checks_succeeded...: 0.00%   0 out of 90
+    checks_failed......: 100.00% 90 out of 90
+
+    Γ£ù status is 502
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 30
+    Γ£ù body has message
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 20
+    Γ£ù status is 200 or 502
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 20
+    Γ£ù body is JSON and has message
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 10
+    Γ£ù CORS header present
+      Γå│  0% ΓÇö Γ£ô 0 / Γ£ù 10
+
+    HTTP
+    http_req_duration....: avg=0s      min=0s      med=0s      max=0s      p(90)=0s      p(95)=0s     
+    http_req_failed......: 100.00% 60 out of 60
+    http_reqs............: 60      1200.295273/s
+
+    EXECUTION
+    iteration_duration...: avg=28.19ms min=12.81ms med=25.77ms max=49.98ms p(90)=39.82ms p(95)=49.45ms
+    iterations...........: 60      1200.295273/s
+
+    NETWORK
+    data_received........: 0 B     0 B/s
+    data_sent............: 0 B     0 B/s
+
+
+
+
+running (00m00.0s), 00/60 VUs, 60 complete and 0 interrupted iterations
+auth_down               Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters
+auth_down_info_works    Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters
+booking_down            Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters
+booking_down_info_works Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters
+cors_on_error           Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters
+info_down               Γ£ô [ 100% ] 10 VUs  00m00.0s/10m0s  10/10 shared iters

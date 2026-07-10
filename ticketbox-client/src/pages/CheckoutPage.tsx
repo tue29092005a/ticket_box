@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const CheckoutPage: React.FC = () => {
   const location = useLocation();
@@ -10,34 +11,10 @@ export const CheckoutPage: React.FC = () => {
     ticketCounts = {},
     totalPrice = 0,
     totalTickets = 0,
-    timeLeft: initialTimeLeft = 900
+    concert_id = 1,
+    timeLeft: initialTimeLeft = 300
   } = location.state || {};
-
-  const [timeLeft, setTimeLeft] = useState<number>(() => {
-    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
-    if (savedExpireAt) {
-      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    return initialTimeLeft;
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return { m, s };
-  };
-
-  const { m, s } = formatTime(timeLeft);
-
-
+  const { timeLeft, m, s } = useBookingTimer(initialTimeLeft);
 
   return (
     <div className="bg-black text-on-surface font-body-md overflow-x-hidden min-h-screen flex flex-col">
@@ -46,12 +23,6 @@ export const CheckoutPage: React.FC = () => {
         <div className="flex justify-between items-center px-6 md:px-margin-desktop py-4 w-full max-w-container-max mx-auto">
           <a href="/" className="text-headline-lg font-headline-lg font-bold text-on-primary-container hover:opacity-80 transition-opacity cursor-pointer inline-block">ticketbox</a>
           <div className="hidden md:flex gap-gutter items-center">
-            <nav className="flex gap-gutter">
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">Create Event</a>
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">My Tickets</a>
-              <a className="text-on-primary-container/80 font-label-md hover:text-white transition-colors" href="#">Account</a>
-            </nav>
-
           </div>
         </div>
       </header>
@@ -62,7 +33,7 @@ export const CheckoutPage: React.FC = () => {
           <div className="flex flex-col gap-base px-6 md:px-margin-desktop py-6 w-full max-w-container-max mx-auto relative">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-4">
-                <button onClick={() => navigate('/seat.html')} className="material-symbols-outlined text-primary hover:bg-surface-bright transition-all p-2 rounded-full">arrow_back</button>
+                <button onClick={() => navigate(`/seat.html?id=${concert_id}`)} className="material-symbols-outlined text-primary hover:bg-surface-bright transition-all p-2 rounded-full">arrow_back</button>
                 <div className="flex flex-col">
                   <h1 className="font-headline-md text-headline-md text-primary">Liveshow Góc Ban Công: Vệt Nắng</h1>
                   <div className="flex flex-wrap gap-4 mt-1">
@@ -132,7 +103,7 @@ export const CheckoutPage: React.FC = () => {
                     <h3 className="font-headline-md text-headline-md text-on-surface">Order Summary</h3>
                     <p className="text-label-md font-label-md text-on-surface-variant">{m}:{s} Remaining</p>
                   </div>
-                  <button onClick={() => navigate('/seat.html')} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
+                  <button onClick={() => navigate(`/seat.html?id=${concert_id}`)} className="text-primary font-label-md hover:underline">Chọn lại vé</button>
                 </div>
                 {/* Summary Content */}
                 <div className="p-6 space-y-6">
@@ -180,7 +151,23 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <p className="text-[10px] text-on-surface-variant text-center leading-relaxed">Vui lòng trả lời tất cả các câu hỏi để tiếp tục</p>
                   {/* CTA */}
-                  <button onClick={() => navigate('/payment.html', { state: location.state })} type="button" className="w-full bg-primary-container text-on-primary-container py-4 rounded-lg font-headline-md text-headline-md flex justify-center items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-md">
+                  <button 
+                    onClick={() => {
+                      let idemKey = sessionStorage.getItem('idempotency_key');
+                      if (!idemKey) {
+                        idemKey = crypto.randomUUID();
+                        sessionStorage.setItem('idempotency_key', idemKey);
+                      }
+                      navigate('/payment.html', { 
+                        state: { 
+                          ...location.state, 
+                          idempotencyKey: idemKey 
+                        } 
+                      });
+                    }} 
+                    type="button" 
+                    className="w-full bg-primary-container text-on-primary-container py-4 rounded-lg font-headline-md text-headline-md flex justify-center items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-md"
+                  >
                     Tiếp tục
                     <span className="material-symbols-outlined">chevron_right</span>
                   </button>

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -29,13 +30,32 @@ async function bootstrap() {
   const gaKey = `show:${showId}:inventory`;
   const svipHashKey = `show:${showId}:svip_seats`;
 
-  // Xoá dữ liệu cũ
-  await redisClient.del(gaKey);
-  await redisClient.del(svipHashKey);
+    const zoneCount = await zoneInventoryRepo.count({ where: { concert_id: cData.id } });
+    if (zoneCount === 0) {
+      await zoneInventoryRepo.insert([
+        { zone: 'VIP', concert_id: cData.id, totalCapacity: 75, availableSlots: 75 },
+        { zone: 'Normal', concert_id: cData.id, totalCapacity: 100, availableSlots: 100 },
+      ]);
+      console.log(`Đã Seed 75 VIP và 100 Normal zones cho Concert ${cData.id} vào Postgres.`);
+    }
 
-  // Set 1000 vé GA
-  await redisClient.hset(gaKey, 'GA', 1000);
-  console.log('Đã nạp 1000 vé GA vào Redis.');
+    // 2. Redis Seed: SVIP Seat Matrix    // Set up Redis keys
+    const inventoryKey = `concert:${cData.id}:inventory`;
+    const svipHashKey = `concert:${cData.id}:svip_seats`;
+
+    // Xoá dữ liệu cũ
+    await redisClient.del(inventoryKey);
+    await redisClient.del(svipHashKey);
+
+    // Set vé GA, VIP, CAT, v.v. vào Redis
+    const zones = await zoneInventoryRepo.find({ where: { concert_id: cData.id } });
+    for (const zone of zones) {
+      if (zone.zone !== 'SVIP') {
+        await redisClient.hset(inventoryKey, zone.zone, zone.totalCapacity);
+      }
+    }
+    console.log(`Đã nạp vé các khu vực cho Concert ${cData.id} vào Redis.`);
+  }
 
   // Tạo CSV mẫu cho VIP Guest Import
   const csvPath = 'vip_guests.csv';
@@ -46,10 +66,11 @@ async function bootstrap() {
   // 3. Import VIP Guest từ CSV vào Redis SVIP Seats
   await new Promise((resolve, reject) => {
     const stream = fs.createReadStream(csvPath).pipe(csv());
+    const svipHashKey1 = `concert:1:svip_seats`;
     
     stream.on('data', async (row) => {
       // Đặt sẵn vé cho khách mời (Pre-allocate) bằng cách ghi trực tiếp vào HASH
-      await redisClient.hset(svipHashKey, row.seatNo, row.email);
+      await redisClient.hset(svipHashKey1, row.seatNo, row.email);
       console.log(`Đã Import khách VIP: Ghế ${row.seatNo} cho ${row.name}`);
     });
 

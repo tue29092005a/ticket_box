@@ -7,7 +7,7 @@ export type ShowInfoDocument = ShowInfo & Document;
 export class ShowInfo {
   // Identifier — maps to concerts.id (UUID)
   @Prop({ required: true, unique: true })
-  showId: string;
+  concert_id: number;
 
   // ── Step 1: Event Info ─────────────────────────────────────────────
   @Prop()

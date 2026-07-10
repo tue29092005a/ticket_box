@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { NotificationsService } from './notifications.service';
 import { NotificationsCron } from './notifications.cron';
 import { Invoice } from '../booking/entities/invoice.entity';

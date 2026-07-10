@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -20,6 +21,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { mongoConfig } from './config/mongo.config';
 
 const coreModules = [
+  ConfigModule.forRoot(),
   TypeOrmModule.forRoot(typeOrmConfig),
   MongooseModule.forRoot(mongoConfig.uri),
   ScheduleModule.forRoot(),

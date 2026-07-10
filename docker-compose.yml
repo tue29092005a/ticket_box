@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: ticketbox-postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     environment:
       POSTGRES_USER: ticketbox
       POSTGRES_PASSWORD: password
@@ -134,6 +134,8 @@ services:
       - "3000:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - ticketbox-network
 

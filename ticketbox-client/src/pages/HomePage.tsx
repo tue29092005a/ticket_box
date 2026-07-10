@@ -13,14 +13,20 @@ export const HomePage: React.FC = () => {
 
   const [shows, setShows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchShows = async () => {
       try {
         const res = await axiosClient.get('/info/shows');
         setShows(res.data);
-      } catch (error) {
-        console.error('Failed to fetch shows:', error);
+      } catch (err: any) {
+        console.error('Failed to fetch shows:', err);
+        if (err.response?.status === 502) {
+          setError(err.response.data?.message || 'Hệ thống tải dữ liệu sự kiện đang nâng cấp. Vui lòng quay lại sau ít phút.');
+        } else {
+          setError('Đã có lỗi xảy ra khi tải danh sách sự kiện.');
+        }
       } finally {
         setLoading(false);
       }
@@ -71,7 +77,10 @@ export const HomePage: React.FC = () => {
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a className="text-on-primary-container font-bold border-b-2 border-on-primary-container pb-1 font-label-md text-label-md" href="#">Home</a>
-            <a className="text-on-primary-container/80 font-label-md text-label-md hover:text-white transition-colors" href="#">Create Event</a>
+            <button onClick={() => navigate('/organizer')} className="bg-on-primary-fixed text-primary px-5 py-2 rounded-full font-bold hover:bg-white transition-all flex items-center gap-2 shadow-md text-label-md">
+              <span className="material-symbols-outlined text-[18px]">add_circle</span>
+              Tạo sự kiện
+            </button>
             <a className="text-on-primary-container/80 font-label-md text-label-md hover:text-white transition-colors" href="#">My Tickets</a>
             <div className="flex items-center gap-4 ml-4">
               {user ? (
@@ -100,8 +109,20 @@ export const HomePage: React.FC = () => {
 
 
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8">
-        {/* Hero Featured Carousel (Starlight Inspired) */}
-        <section className="mb-20">
+        {error ? (
+          <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4 animate-fade-in">
+            <span className="material-symbols-outlined text-[80px] text-on-surface-variant/50 mb-6">conveyor_belt</span>
+            <h3 className="font-headline-md text-on-surface mb-2">Thông tin không khả dụng</h3>
+            <p className="font-body-md text-on-surface-variant max-w-md">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-8 bg-primary text-on-primary px-6 py-2.5 rounded-full font-bold hover:bg-white transition-colors flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px]">refresh</span>
+              Thử lại
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Hero Featured Carousel (Starlight Inspired) */}
+            <section className="mb-20">
           <div className="relative group overflow-hidden rounded-xl bg-surface-container-low shadow-2xl flex flex-col md:flex-row h-auto md:h-[480px] cursor-pointer" onClick={() => navigate('/event.html')}>
             {/* Right Visual Side */}
             <div className="flex-1 relative overflow-hidden bg-surface-container-high h-[300px] md:h-full">
@@ -187,6 +208,8 @@ export const HomePage: React.FC = () => {
             ))}
           </div>
         </section>
+          </>
+        )}
       </main>
 
 

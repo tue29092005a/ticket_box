@@ -1,5 +1,6 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import Redis from 'ioredis';
+import NodeCache from 'node-cache';
 import { REDIS_CLIENT } from '../config/redis.config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -21,6 +22,8 @@ import { ZoneInventory } from '../booking/entities/zone-inventory.entity';
 export class InfoService {
   private readonly logger = new Logger(InfoService.name);
   private activePromises = new Map<string, Promise<any>>(); // SingleFlight pattern
+  private showCache = new NodeCache({ stdTTL: 300 }); // 5 minutes TTL
+  private inventoryCache = new NodeCache({ stdTTL: 1 }); // 1 second TTL
 
   constructor(
     @Inject(REDIS_CLIENT) private readonly redis: Redis,
@@ -32,9 +35,20 @@ export class InfoService {
   // Lấy danh sách tất cả các show (ACTIVE status)
   async getAllShows() {
     const cacheKey = 'all_shows';
-    const redisData = await this.redis.get(cacheKey);
+    let shows = this.showCache.get(cacheKey);
+    if (shows) return shows;
+
+    let redisData: string | null = null;
+    try {
+      redisData = await this.redis.get(cacheKey);
+    } catch (error) {
+      this.logger.error(`[Redis Error] Failed to get all_shows: ${error.message}`);
+    }
+
     if (redisData) {
-      return JSON.parse(redisData);
+      const parsed = JSON.parse(redisData);
+      this.showCache.set(cacheKey, parsed);
+      return parsed;
     }
 
     if (this.activePromises.has(cacheKey)) {
@@ -43,8 +57,16 @@ export class InfoService {
 
     const promise = (async () => {
       try {
-        const doubleCheck = await this.redis.get(cacheKey);
-        if (doubleCheck) return JSON.parse(doubleCheck);
+        let doubleCheck: string | null = null;
+        try {
+          doubleCheck = await this.redis.get(cacheKey);
+        } catch (e) {}
+
+        if (doubleCheck) {
+          const parsed = JSON.parse(doubleCheck);
+          this.showCache.set(cacheKey, parsed);
+          return parsed;
+        }
 
         const postgresShows = await this.showRepo.find({ where: { status: 'ACTIVE' } });
         const mongoInfos = await this.showInfoModel.find().lean();
@@ -67,7 +89,10 @@ export class InfoService {
           };
         });
 
-        await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60);
+        try {
+          await this.redis.set(cacheKey, JSON.stringify(finalData), 'EX', 60);
+        } catch (e) {}
+        this.showCache.set(cacheKey, finalData);
         return finalData;
       } finally {
         this.activePromises.delete(cacheKey);
@@ -132,9 +157,9 @@ export class InfoService {
       } finally {
         this.activePromises.delete(cacheKey);
       }
-    })();
+    }
+    }
 
-    this.activePromises.set(cacheKey, promise);
-    return promise;
+    return showInfo;
   }
 }

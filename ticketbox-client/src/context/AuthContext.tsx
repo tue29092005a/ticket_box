@@ -65,6 +65,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userId');
+    sessionStorage.removeItem('booking_expireAt');
+    sessionStorage.removeItem('idempotency_key');
     setUser(null);
   };
 

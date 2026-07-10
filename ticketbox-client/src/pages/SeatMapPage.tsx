@@ -4,25 +4,19 @@ import { useTicketEvents } from '../hooks/useTicketEvents';
 import axiosClient from '../utils/axiosClient';
 import { useAuth } from '../context/AuthContext';
 import { LoginModal } from '../components/LoginModal';
+import { useBookingTimer } from '../hooks/useBookingTimer';
 
 export const SeatMapPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginMessage, setLoginMessage] = useState('');
-  const [timeLeft, setTimeLeft] = useState(() => {
-    const savedExpireAt = sessionStorage.getItem('booking_expireAt');
-    if (savedExpireAt) {
-      const remaining = Math.floor((parseInt(savedExpireAt) - Date.now()) / 1000);
-      return remaining > 0 ? remaining : 0;
-    }
-    const newExpireAt = Date.now() + 15 * 60 * 1000;
-    sessionStorage.setItem('booking_expireAt', newExpireAt.toString());
-    return 900;
-  });
+  
+  const { timeLeft, formattedTime } = useBookingTimer(300); // 5 phút
+
   const navigate = useNavigate();
   
   const searchParams = new URLSearchParams(window.location.search);
-  const showId = searchParams.get('id') || '1';
+  const concert_id = Number(searchParams.get('id')) || 1;
 
   const [eventData, setEventData] = useState<any>(null);
   const [isBookingDown, setIsBookingDown] = useState(false);
@@ -33,22 +27,37 @@ export const SeatMapPage: React.FC = () => {
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({});
   const [inventory, setInventory] = useState<Record<string, number>>({});
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  // Removing formatTime as we use formattedTime from hook
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
 
   useEffect(() => {
+    // Kiểm tra đơn hàng đang chờ thanh toán
+    if (sessionStorage.getItem('idempotency_key') && sessionStorage.getItem('booking_expireAt')) {
+      const expireAt = parseInt(sessionStorage.getItem('booking_expireAt') || '0', 10);
+      if (expireAt > Date.now()) {
+        const wantsToContinue = window.confirm('Bạn đang có một đơn hàng đang chờ thanh toán. Bạn có muốn tiếp tục thanh toán không? Nhấn OK để tiếp tục, nhấn Cancel để hủy và chọn lại.');
+        if (wantsToContinue) {
+          const savedCart = sessionStorage.getItem('cart_state');
+          if (savedCart) {
+            navigate('/checkout.html', { state: JSON.parse(savedCart) });
+          } else {
+            navigate('/checkout.html');
+          }
+          return;
+        } else {
+          sessionStorage.removeItem('idempotency_key');
+          sessionStorage.removeItem('booking_expireAt');
+          sessionStorage.removeItem('cart_state');
+          // Có thể gọi API hủy đơn ở đây nếu cần, nhưng timeout/rollback worker sẽ tự xử lý
+        }
+      } else {
+        sessionStorage.removeItem('idempotency_key');
+        sessionStorage.removeItem('booking_expireAt');
+      }
+    }
+
     // Lấy thông tin sự kiện và zones
-    axiosClient.get(`/info/show/${showId}`).then((res) => {
+    axiosClient.get(`/info/show/${concert_id}`).then((res) => {
       setEventData(res.data);
       const initialInventory: Record<string, number> = {};
       const initialCounts: Record<string, number> = {};
@@ -63,14 +72,14 @@ export const SeatMapPage: React.FC = () => {
     }).catch(() => setIsBookingDown(true));
 
     // Lấy trạng thái ghế SVIP ban đầu
-    axiosClient.get(`/booking/show/${showId}/seats`).then((res) => {
+    axiosClient.get(`/booking/show/${concert_id}/seats`).then((res) => {
       if (res.data) {
         const booked = new Set<string>();
         Object.keys(res.data).forEach(seatId => booked.add(seatId));
         setBookedSeats(booked);
       }
     }).catch(() => setIsBookingDown(true));
-  }, [showId]);
+  }, [concert_id, navigate]);
 
   useTicketEvents(user?.id || 'guest', (payload) => {
     if (payload.seatNo) {
@@ -152,20 +161,26 @@ export const SeatMapPage: React.FC = () => {
     
     try {
       await axiosClient.post('/booking/hold', {
-        showId,
+        concert_id,
         seats: Array.from(selectedSeats),
         ticketCounts
       });
       
+      sessionStorage.removeItem('idempotency_key');
+
+      const statePayload = {
+        selectedSeats: Array.from(selectedSeats),
+        ticketCounts,
+        totalPrice,
+        totalTickets,
+        concert_id,
+        timeLeft: timeLeft
+      };
+
+      sessionStorage.setItem('cart_state', JSON.stringify(statePayload));
+      
       navigate('/checkout.html', {
-        state: {
-          selectedSeats: Array.from(selectedSeats),
-          ticketCounts,
-          totalPrice,
-          totalTickets,
-          showId,
-          timeLeft
-        }
+        state: statePayload
       });
     } catch (error: any) {
       if (error.response?.status === 400) {
@@ -219,7 +234,7 @@ export const SeatMapPage: React.FC = () => {
         })}
       </div>
       <div className="flex gap-2">
-        {[...Array(8)].map((_, i) => {
+        {[...Array(4)].map((_, i) => {
           const seatNum = i + 17;
           const seatId = `${rowLabel}-${seatNum}`;
           return (
@@ -245,7 +260,7 @@ export const SeatMapPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => window.location.href = `/event.html?id=${showId}`}
+              onClick={() => window.location.href = `/event.html?id=${concert_id}`}
               className="p-2 hover:bg-surface-container-high transition-all rounded-full flex items-center justify-center"
             >
               <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>arrow_back</span>
@@ -255,26 +270,27 @@ export const SeatMapPage: React.FC = () => {
           <div className="flex items-center gap-gutter">
             <div className="glass-timer flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant" style={{ backdropFilter: 'blur(12px)', background: 'rgba(28, 27, 27, 0.8)' }}>
               <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}>timer</span>
-              <span className="font-label-md text-on-surface">{formatTime(timeLeft)} Remaining</span>
+              <span className="font-label-md text-on-surface">{formattedTime} Remaining</span>
             </div>
-            {user ? (
-              <div className="flex items-center gap-4 border border-outline-variant rounded-full px-4 py-1.5 bg-surface-container-high/50 backdrop-blur-sm">
-                <span className="text-sm font-medium text-purple-400">{user.email}</span>
-                <button 
-                  onClick={logout}
-                  className="text-xs text-gray-400 hover:text-red-400 transition-colors"
-                >
-                  Đăng xuất
-                </button>
-              </div>
-            ) : (
-              <span className="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-high p-2 rounded-full transition-all" style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24" }} onClick={() => { setLoginMessage(''); setIsLoginModalOpen(true); }}>account_circle</span>
-            )}
           </div>
         </div>
       </header>
       
-      <main className="flex h-[calc(100vh-80px)] overflow-hidden flex-row">
+      <main className="flex h-[calc(100vh-80px)] overflow-hidden flex-row relative">
+        {isBookingDown && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-surface-container-high p-8 rounded-xl flex flex-col items-center max-w-md text-center border border-outline-variant shadow-2xl">
+              <span className="material-symbols-outlined text-[64px] text-error mb-4">cloud_off</span>
+              <h3 className="text-xl font-bold text-on-surface mb-2">Hệ thống đặt vé đang gián đoạn</h3>
+              <p className="text-on-surface-variant mb-6">Lượng truy cập hiện đang quá tải hoặc hệ thống bảo trì. Vui lòng thử lại sau.</p>
+              <button onClick={() => window.location.reload()} className="bg-primary text-on-primary px-6 py-2.5 rounded-full font-bold hover:brightness-110 transition-all flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">refresh</span>
+                Tải lại trang
+              </button>
+            </div>
+          </div>
+        )}
+        
         {hasSVIP ? (
           <section className="flex-1 overflow-auto seat-map-scroll flex flex-col items-center p-12 bg-black h-full relative" style={{ scrollbarWidth: 'thin' }}>
 

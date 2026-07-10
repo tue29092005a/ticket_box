@@ -13,7 +13,8 @@ import { ZoneInventory } from './entities/zone-inventory.entity';
 @Injectable()
 export class BookingService implements OnModuleInit {
   private readonly logger = new Logger(BookingService.name);
-  private seatCache = new NodeCache({ stdTTL: 60 });
+  private seatCache = new NodeCache({ stdTTL: 1 }); // 1 second TTL
+  private inventoryCache = new NodeCache({ stdTTL: 1 }); // 1 second TTL
   private activePromises = new Map<string, Promise<any>>(); // SingleFlight pattern
 
   constructor(
@@ -35,6 +36,8 @@ export class BookingService implements OnModuleInit {
         for (let i = 1; i <= cols; i++) {
           seats.push({ row, number: String(i), showId: '11111111-1111-1111-1111-111111111111', status: 'AVAILABLE', zone: 'SVIP' });
         }
+        await this.seatInventoryRepo.insert(seats);
+        this.logger.log(`Seeded 40 SVIP seats for concert ${cid} successfully.`);
       }
       await this.seatInventoryRepo.insert(seats);
       this.logger.log('Seeded 200 SVIP seats successfully.');
@@ -64,30 +67,68 @@ export class BookingService implements OnModuleInit {
   }
 
   // Lấy trạng thái tất cả ghế SVIP
-  async getSeatStatus(showId: string) {
-    const seatHashKey = `show:${showId}:svip_seats`;
+  async getSeatStatus(concert_id: number) {
+    const seatHashKey = `concert:${concert_id}:svip_seats`;
     let seats = this.seatCache.get(seatHashKey);
     if (!seats) {
-      seats = await this.redis.hgetall(seatHashKey);
-      this.seatCache.set(seatHashKey, seats);
+      if (this.activePromises.has(seatHashKey)) {
+        seats = await this.activePromises.get(seatHashKey);
+      } else {
+        const promise = (async () => {
+          try {
+            const data = await this.redis.hgetall(seatHashKey);
+            if (data) this.seatCache.set(seatHashKey, data);
+            return data || {};
+          } catch (error) {
+            this.logger.error(`[Redis Error] getSeatStatus fallback: ${error.message}`);
+            return {}; // Tránh văng lỗi 500
+          } finally {
+            this.activePromises.delete(seatHashKey);
+          }
+        })();
+        this.activePromises.set(seatHashKey, promise);
+        seats = await promise;
+      }
     }
     return seats;
   }
 
   // Lấy lượng vé còn lại của tất cả các zone
-  async getInventory(showId: string) {
-    const inventoryKey = `show:${showId}:inventory`;
-    const inventory = await this.redis.hgetall(inventoryKey);
+  async getInventory(concert_id: number) {
+    const inventoryKey = `concert:${concert_id}:inventory`;
+    let inventory: any = this.inventoryCache.get(inventoryKey);
+    
+    if (!inventory) {
+      if (this.activePromises.has(inventoryKey)) {
+        inventory = await this.activePromises.get(inventoryKey);
+      } else {
+        const promise = (async () => {
+          try {
+            const data = await this.redis.hgetall(inventoryKey);
+            if (data) this.inventoryCache.set(inventoryKey, data);
+            return data || {};
+          } catch (error) {
+            this.logger.error(`[Redis Error] getInventory fallback: ${error.message}`);
+            return {}; // Tránh văng lỗi 500
+          } finally {
+            this.activePromises.delete(inventoryKey);
+          }
+        })();
+        this.activePromises.set(inventoryKey, promise);
+        inventory = await promise;
+      }
+    }
+
     const parsed: Record<string, number> = {};
-    for (const [key, val] of Object.entries(inventory)) {
-      parsed[key] = parseInt(val, 10);
+    for (const [key, val] of Object.entries(inventory || {})) {
+      parsed[key] = parseInt(val as string, 10);
     }
     return parsed;
   }
 
   updateLocalSeatCache(payload: any) {
-    if (payload.showId && payload.seatNo && payload.status) {
-      const seatHashKey = `show:${payload.showId}:svip_seats`;
+    if (payload.concert_id && payload.seatNo && payload.status) {
+      const seatHashKey = `concert:${payload.concert_id}:svip_seats`;
       let seats: any = this.seatCache.get(seatHashKey);
       if (seats) {
         if (payload.status === 'held' || payload.status === 'booked') {
@@ -101,19 +142,19 @@ export class BookingService implements OnModuleInit {
   }
 
   // Đặt vé General Admission (GA) sử dụng HINCRBY
-  async bookGATicket(showId: string, userId: string, quantity: number, zoneType: string = 'Normal') {
-    const inventoryKey = `show:${showId}:inventory`;
+  async bookGATicket(concert_id: number, userId: string, quantity: number, zoneType: string = 'Normal') {
+    const inventoryKey = `concert:${concert_id}:inventory`;
     
     // Khởi tạo quota ban đầu nếu chưa tồn tại trong Redis
     const exists = await this.redis.hexists(inventoryKey, zoneType);
     if (!exists) {
-      const zoneInfo = await this.zoneInventoryRepo.findOne({ where: { zone: zoneType, showId } });
+      const zoneInfo = await this.zoneInventoryRepo.findOne({ where: { zone: zoneType, concert_id } });
       if (!zoneInfo) throw new BadRequestException(`Zone ${zoneType} không tồn tại.`);
       await this.redis.hsetnx(inventoryKey, zoneType, zoneInfo.availableSlots);
     }
 
     // Kiểm tra giới hạn số lượng vé mỗi tài khoản (Per-User Quota)
-    const userQuotaKey = `user:${userId}:concert:${showId}:zone:${zoneType}`;
+    const userQuotaKey = `user:${userId}:concert:${concert_id}:zone:${zoneType}`;
     const maxQuota = 4; // Giới hạn chung là 4 vé cho mỗi zone GA
     
     const currentUserQuota = await this.redis.incrby(userQuotaKey, quantity);
@@ -137,22 +178,20 @@ export class BookingService implements OnModuleInit {
 
     // Đẩy message vào RabbitMQ để gửi notification bất đồng bộ
     this.rabbitChannel.sendToQueue('notification_queue', Buffer.from(JSON.stringify({
-      userId, showId, type: zoneType, quantity
+      userId, concert_id, type: zoneType, quantity
     })));
 
-    // Đẩy vào RabbitMQ Wait Queue để tự động hoàn trả số lượng (Rollback) nếu không thanh toán sau 10 phút
-    const rollbackPayload = JSON.stringify({ showId, userId, type: zoneType, quantity, action: 'rollback_quantity' });
-    this.rabbitChannel.sendToQueue('hold_timeout_wait_queue', Buffer.from(rollbackPayload), {
-      expiration: '20000' // TTL = 20 giây (20,000 ms)
-    });
+    // Đẩy vào RabbitMQ Wait Queue để tự động hoàn trả số lượng (Rollback) nếu không thanh toán sau 20 giây
+    const rollbackPayload = JSON.stringify({ concert_id, userId, type: zoneType, quantity, action: 'rollback_quantity' });
+    this.rabbitChannel.sendToQueue('hold_timeout_wait_5m_queue', Buffer.from(rollbackPayload));
 
     return { success: true, remaining };
   }
 
   // Đặt ghế SVIP cụ thể sử dụng HSETNX để tránh trùng ghế
-  async bookSVIPTicket(showId: string, userId: string, seatNo: string) {
-    const seatHashKey = `show:${showId}:svip_seats`;
-    const maxSvipSeats = 200;
+  async bookSVIPTicket(concert_id: number, userId: string, seatNo: string) {
+    const seatHashKey = `concert:${concert_id}:svip_seats`;
+    const maxSvipSeats = 40;
 
     // 1. Kiểm tra số lượng ghế đã bán (HLEN)
     const soldSeatsCount = await this.redis.hlen(seatHashKey);
@@ -161,7 +200,7 @@ export class BookingService implements OnModuleInit {
     }
 
     // Kiểm tra giới hạn số lượng vé SVIP mỗi tài khoản (Per-User Quota)
-    const userQuotaKey = `user:${userId}:concert:${showId}:zone:svip`;
+    const userQuotaKey = `user:${userId}:concert:${concert_id}:zone:svip`;
     const maxSvipPerUser = 2; // SVIP tối đa 2 vé/tài khoản
 
     const currentUserQuota = await this.redis.incr(userQuotaKey);
@@ -189,21 +228,28 @@ export class BookingService implements OnModuleInit {
       // Rollback Redis vì DB báo ghế đã có người đặt
       await this.redis.hdel(seatHashKey, seatNo);
       await this.redis.decr(userQuotaKey);
+      
+      // Repair sync: DB state might be out of sync with Redis
+      const actualDbSeat = await this.seatInventoryRepo.findOne({ where: { seatNo, concert_id } });
+      if (actualDbSeat) {
+        this.logger.warn(`[Sync Warning] Redis hold failed sync for ${seatNo}. DB state: ${actualDbSeat.status} by ${actualDbSeat.reservedBy}`);
+        if (actualDbSeat.status === 'BOOKED' && actualDbSeat.reservedBy) {
+          await this.redis.hset(seatHashKey, seatNo, `${actualDbSeat.reservedBy}:PAID`);
+        }
+      }
       throw new BadRequestException('Thao tác không hợp lệ, ghế đã được đặt theo Database.');
     }
 
     // Gửi event broadcast cho tất cả client để cập nhật ghế trên sơ đồ thành màu tím (held)
-    this.sseService.broadcast({ showId, seatNo, status: 'held', userId, message: `Ghế SVIP ${seatNo} đang được giữ.` });
+    this.sseService.broadcast({ concert_id, seatNo, status: 'held', userId, message: `Ghế SVIP ${seatNo} đang được giữ.` });
     
     // Gửi thông báo riêng tư cho người vừa đặt (Opt-in)
-    this.sseService.notifyClient(userId, { type: 'message', message: `Giữ ghế SVIP ${seatNo} thành công, vui lòng thanh toán trong 10 phút.` });
+    this.sseService.notifyClient(userId, { type: 'message', message: `Giữ ghế SVIP ${seatNo} thành công, vui lòng thanh toán trong 30 giây.` });
 
     // 3. Đẩy vào RabbitMQ Wait Queue (Delayed Message giả lập qua TTL + DLX)
-    // Nếu người dùng không thanh toán sau 10 phút, message này sẽ rớt sang DLQ và tiến hành Rollback
-    const payload = JSON.stringify({ showId, userId, seatNo, action: 'rollback_seat' });
-    this.rabbitChannel.sendToQueue('hold_timeout_wait_queue', Buffer.from(payload), {
-      expiration: '20000' // TTL = 20 giây (20,000 ms)
-    });
+    // Nếu người dùng không thanh toán sau 30 giây, message này sẽ rớt sang DLQ và tiến hành Rollback
+    const payload = JSON.stringify({ concert_id, userId, seatNo, action: 'rollback_seat' });
+    this.rabbitChannel.sendToQueue('hold_timeout_wait_5m_queue', Buffer.from(payload));
 
     return { success: true, seatNo };
   }
@@ -241,47 +287,35 @@ export class BookingService implements OnModuleInit {
             }
           }
         }
+  /**
+   * Đồng bộ lại toàn bộ trạng thái ghế SVIP từ DB lên Redis
+   */
+  async repairSeatSync(concert_id: number) {
+    this.logger.log(`[Repair Sync] Bắt đầu đồng bộ lại trạng thái ghế cho show ${concert_id}`);
+    const dbSeats = await this.seatInventoryRepo.find({ where: { concert_id } });
+    const pipeline = this.redis.pipeline();
+    const seatHashKey = `concert:${concert_id}:svip_seats`;
+
+    for (const seat of dbSeats) {
+      if (seat.status === 'BOOKED' && seat.reservedBy) {
+        pipeline.hset(seatHashKey, seat.seatNo, `${seat.reservedBy}:PAID`);
+      } else if (seat.status === 'RESERVED' && seat.reservedBy) {
+        // Kiểm tra xem Redis có giữ đúng người không, nếu không thì ghi đè
+        pipeline.hset(seatHashKey, seat.seatNo, seat.reservedBy);
+      } else if (seat.status === 'AVAILABLE') {
+        pipeline.hdel(seatHashKey, seat.seatNo);
       }
     }
+    await pipeline.exec();
+    this.logger.log(`[Repair Sync] Đồng bộ hoàn tất cho show ${concert_id}`);
+  }
 
-    // Chốt vé các Zone linh động
-    for (const [zone, count] of Object.entries(ticketCounts)) {
-      const quantity = count as number;
-      if (quantity > 0) {
-        // Lấy giá từ DB để push vào mảng tickets, thay vì hardcode
-        const zoneInfo = await this.zoneInventoryRepo.findOne({ where: { zone, showId } });
-        const price = zoneInfo ? zoneInfo.price : 0;
-
-        const dbUpdate = await this.zoneInventoryRepo.createQueryBuilder()
-          .update(ZoneInventory)
-          .set({ availableSlots: () => `availableSlots - ${quantity}` })
-          .where('zone = :zone AND showId = :showId AND availableSlots >= :count', {
-            zone, showId, count: quantity
-          })
-          .execute();
-
-        if (dbUpdate.affected === 0) {
-          throw new BadRequestException(`Rất tiếc, vé ${zone} đã được bán hết do biến động hệ thống.`);
-        }
-
-        await this.redis.set(`user:${userId}:concert:${showId}:zone:${zone}:paid_qty`, quantity.toString(), 'EX', 86400);
-        for (let i = 0; i < quantity; i++) tickets.push({ zone, price });
-      }
-    }
-
-    // Gửi event để Worker lưu Database
-    const syncPayload = {
-      userId,
-      showId,
-      totalAmount,
-      tickets,
-    };
-
-    this.rabbitChannel.sendToQueue('payment_success_queue', Buffer.from(JSON.stringify(syncPayload)));
-
-    // Xóa các wait_queue jobs (Trong thực tế cần ID để xóa hoặc xử lý logic idempotent ở DB/Rollback)
-    // Ở đây đơn giản mô phỏng đã thanh toán.
-    
-    return { success: true, message: 'Thanh toán thành công' };
+  // API Mô phỏng thanh toán (DEPRECATED - Chuyển sang PaymentModule)
+  /**
+   * @deprecated Sử dụng PaymentController.createOrder và captureOrder thay thế
+   */
+  async payTickets(concert_id: number, userId: string, payload: any) {
+    this.logger.warn(`[Deprecated] Gọi hàm payTickets cũ. Vui lòng chuyển sang dùng PaymentModule.`);
+    throw new BadRequestException('Endpoint thanh toán cũ đã bị vô hiệu hóa. Vui lòng cập nhật ứng dụng.');
   }
 }

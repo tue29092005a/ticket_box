@@ -1,5 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 import { Invoice } from './invoice.entity';
+import { Concert } from '../../info/entities/concert.entity';
+import { SeatInventory } from './seat-inventory.entity';
+import { ZoneInventory } from './zone-inventory.entity';
 
 @Entity('tickets')
 @Unique(['showId', 'seatNo'])
@@ -8,7 +11,7 @@ export class Ticket {
   id: string;
 
   @Column()
-  showId: string;
+  concert_id: number;
 
   @Column({ nullable: true })
   seatNo: string; // for SVIP

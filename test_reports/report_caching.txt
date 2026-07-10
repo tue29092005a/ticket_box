@@ -1,0 +1,431 @@
+﻿
+         /\      Grafana   /ΓÇ╛ΓÇ╛/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ΓÇ╛ΓÇ╛\ 
+  /          \   |   (  |  (ΓÇ╛)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: test/k6-caching.js
+        output: -
+
+     scenarios: (100.00%) 4 scenarios, 4500 max VUs, 10m30s max duration (incl. graceful stop):
+              * cache_hit: 500 looping VUs for 1m0s (exec: getShowOne, gracefulStop: 30s)
+              * cache_stampede: 2000 iterations shared among 2000 VUs (maxDuration: 10m0s, exec: getShowOneAndVerify, gracefulStop: 30s)
+              * homepage_load: 1000 looping VUs for 30s (exec: getShows, gracefulStop: 30s)
+              * multi_show: 1000 looping VUs for 30s (exec: getShowRandom, gracefulStop: 30s)
+
+
+running (00m00.5s), 4500/4500 VUs, 4 complete and 0 interrupted iterations
+cache_hit        [   1% ] 500 VUs   0m00.5s/1m0s   
+cache_stampede   [   0% ] 2000 VUs  00m00.5s/10m0s  0004/2000 shared iters
+homepage_load    [   2% ] 1000 VUs  00.5s/30s      
+multi_show       [   2% ] 1000 VUs  00.5s/30s      
+
+running (00m01.6s), 3832/4500 VUs, 689 complete and 0 interrupted iterations
+cache_hit        [   3% ] 500 VUs   0m01.6s/1m0s   
+cache_stampede   [  33% ] 2000 VUs  00m01.6s/10m0s  0668/2000 shared iters
+homepage_load    [   5% ] 1000 VUs  01.6s/30s      
+multi_show       [   5% ] 1000 VUs  01.6s/30s      
+
+running (00m02.5s), 3157/4500 VUs, 3044 complete and 0 interrupted iterations
+cache_hit        [   4% ] 500 VUs   0m02.5s/1m0s   
+cache_stampede   [  67% ] 2000 VUs  00m02.5s/10m0s  1343/2000 shared iters
+homepage_load    [   8% ] 1000 VUs  02.5s/30s      
+multi_show       [   8% ] 1000 VUs  02.5s/30s      
+
+running (00m03.5s), 2523/4500 VUs, 4397 complete and 0 interrupted iterations
+cache_hit        [   6% ] 500 VUs   0m03.5s/1m0s   
+cache_stampede   [  99% ] 2000 VUs  00m03.5s/10m0s  1977/2000 shared iters
+homepage_load    [  12% ] 1000 VUs  03.5s/30s      
+multi_show       [  12% ] 1000 VUs  03.5s/30s      
+
+running (00m04.5s), 2500/4500 VUs, 6315 complete and 0 interrupted iterations
+cache_hit        [   8% ] 500 VUs   0m04.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  15% ] 1000 VUs  04.5s/30s      
+multi_show       [  15% ] 1000 VUs  04.5s/30s      
+
+running (00m05.5s), 2500/4500 VUs, 8144 complete and 0 interrupted iterations
+cache_hit        [   9% ] 500 VUs   0m05.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  18% ] 1000 VUs  05.5s/30s      
+multi_show       [  18% ] 1000 VUs  05.5s/30s      
+
+running (00m06.5s), 2500/4500 VUs, 9946 complete and 0 interrupted iterations
+cache_hit        [  11% ] 500 VUs   0m06.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  22% ] 1000 VUs  06.5s/30s      
+multi_show       [  22% ] 1000 VUs  06.5s/30s      
+
+running (00m07.5s), 2500/4500 VUs, 11560 complete and 0 interrupted iterations
+cache_hit        [  13% ] 500 VUs   0m07.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  25% ] 1000 VUs  07.5s/30s      
+multi_show       [  25% ] 1000 VUs  07.5s/30s      
+
+running (00m08.5s), 2500/4500 VUs, 13447 complete and 0 interrupted iterations
+cache_hit        [  14% ] 500 VUs   0m08.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  28% ] 1000 VUs  08.5s/30s      
+multi_show       [  28% ] 1000 VUs  08.5s/30s      
+
+running (00m09.5s), 2500/4500 VUs, 15227 complete and 0 interrupted iterations
+cache_hit        [  16% ] 500 VUs   0m09.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  32% ] 1000 VUs  09.5s/30s      
+multi_show       [  32% ] 1000 VUs  09.5s/30s      
+
+running (00m10.5s), 2500/4500 VUs, 16653 complete and 0 interrupted iterations
+cache_hit        [  18% ] 500 VUs   0m10.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  35% ] 1000 VUs  10.5s/30s      
+multi_show       [  35% ] 1000 VUs  10.5s/30s      
+
+running (00m11.5s), 2500/4500 VUs, 17800 complete and 0 interrupted iterations
+cache_hit        [  19% ] 500 VUs   0m11.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  38% ] 1000 VUs  11.5s/30s      
+multi_show       [  38% ] 1000 VUs  11.5s/30s      
+
+running (00m12.5s), 2500/4500 VUs, 19469 complete and 0 interrupted iterations
+cache_hit        [  21% ] 500 VUs   0m12.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  42% ] 1000 VUs  12.5s/30s      
+multi_show       [  42% ] 1000 VUs  12.5s/30s      
+
+running (00m13.5s), 2500/4500 VUs, 21176 complete and 0 interrupted iterations
+cache_hit        [  23% ] 500 VUs   0m13.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  45% ] 1000 VUs  13.5s/30s      
+multi_show       [  45% ] 1000 VUs  13.5s/30s      
+
+running (00m14.5s), 2500/4500 VUs, 22924 complete and 0 interrupted iterations
+cache_hit        [  24% ] 500 VUs   0m14.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  48% ] 1000 VUs  14.5s/30s      
+multi_show       [  48% ] 1000 VUs  14.5s/30s      
+
+running (00m15.5s), 2500/4500 VUs, 24758 complete and 0 interrupted iterations
+cache_hit        [  26% ] 500 VUs   0m15.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  52% ] 1000 VUs  15.5s/30s      
+multi_show       [  52% ] 1000 VUs  15.5s/30s      
+
+running (00m16.5s), 2500/4500 VUs, 26538 complete and 0 interrupted iterations
+cache_hit        [  28% ] 500 VUs   0m16.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  55% ] 1000 VUs  16.5s/30s      
+multi_show       [  55% ] 1000 VUs  16.5s/30s      
+
+running (00m17.5s), 2500/4500 VUs, 28119 complete and 0 interrupted iterations
+cache_hit        [  29% ] 500 VUs   0m17.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  58% ] 1000 VUs  17.5s/30s      
+multi_show       [  58% ] 1000 VUs  17.5s/30s      
+
+running (00m18.5s), 2500/4500 VUs, 29484 complete and 0 interrupted iterations
+cache_hit        [  31% ] 500 VUs   0m18.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  62% ] 1000 VUs  18.5s/30s      
+multi_show       [  62% ] 1000 VUs  18.5s/30s      
+
+running (00m19.6s), 2500/4500 VUs, 31192 complete and 0 interrupted iterations
+cache_hit        [  33% ] 500 VUs   0m19.6s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  65% ] 1000 VUs  19.6s/30s      
+multi_show       [  65% ] 1000 VUs  19.6s/30s      
+
+running (00m20.5s), 2500/4500 VUs, 32823 complete and 0 interrupted iterations
+cache_hit        [  34% ] 500 VUs   0m20.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  68% ] 1000 VUs  20.5s/30s      
+multi_show       [  68% ] 1000 VUs  20.5s/30s      
+
+running (00m21.5s), 2500/4500 VUs, 34227 complete and 0 interrupted iterations
+cache_hit        [  36% ] 500 VUs   0m21.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  72% ] 1000 VUs  21.5s/30s      
+multi_show       [  72% ] 1000 VUs  21.5s/30s      
+
+running (00m22.5s), 2500/4500 VUs, 35900 complete and 0 interrupted iterations
+cache_hit        [  38% ] 500 VUs   0m22.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  75% ] 1000 VUs  22.5s/30s      
+multi_show       [  75% ] 1000 VUs  22.5s/30s      
+
+running (00m23.6s), 2500/4500 VUs, 37415 complete and 0 interrupted iterations
+cache_hit        [  39% ] 500 VUs   0m23.6s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  79% ] 1000 VUs  23.6s/30s      
+multi_show       [  79% ] 1000 VUs  23.6s/30s      
+
+running (00m24.5s), 2500/4500 VUs, 38782 complete and 0 interrupted iterations
+cache_hit        [  41% ] 500 VUs   0m24.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  82% ] 1000 VUs  24.5s/30s      
+multi_show       [  82% ] 1000 VUs  24.5s/30s      
+
+running (00m25.5s), 2500/4500 VUs, 40175 complete and 0 interrupted iterations
+cache_hit        [  43% ] 500 VUs   0m25.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  85% ] 1000 VUs  25.5s/30s      
+multi_show       [  85% ] 1000 VUs  25.5s/30s      
+
+running (00m26.5s), 2500/4500 VUs, 41576 complete and 0 interrupted iterations
+cache_hit        [  44% ] 500 VUs   0m26.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  88% ] 1000 VUs  26.5s/30s      
+multi_show       [  88% ] 1000 VUs  26.5s/30s      
+
+running (00m27.5s), 2500/4500 VUs, 42944 complete and 0 interrupted iterations
+cache_hit        [  46% ] 500 VUs   0m27.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  92% ] 1000 VUs  27.5s/30s      
+multi_show       [  92% ] 1000 VUs  27.5s/30s      
+
+running (00m28.5s), 2500/4500 VUs, 44555 complete and 0 interrupted iterations
+cache_hit        [  48% ] 500 VUs   0m28.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  95% ] 1000 VUs  28.5s/30s      
+multi_show       [  95% ] 1000 VUs  28.5s/30s      
+
+running (00m29.5s), 2500/4500 VUs, 46146 complete and 0 interrupted iterations
+cache_hit        [  49% ] 500 VUs   0m29.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load    [  98% ] 1000 VUs  29.5s/30s      
+multi_show       [  98% ] 1000 VUs  29.5s/30s      
+
+running (00m30.5s), 1988/4500 VUs, 47662 complete and 0 interrupted iterations
+cache_hit        [  51% ] 500 VUs   0m30.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γåô [ 100% ] 1000 VUs  30s            
+multi_show     Γåô [ 100% ] 1000 VUs  30s            
+
+running (00m31.5s), 0849/4500 VUs, 49079 complete and 0 interrupted iterations
+cache_hit        [  53% ] 500 VUs   0m31.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γåô [ 100% ] 1000 VUs  30s            
+multi_show     Γåô [ 100% ] 1000 VUs  30s            
+
+running (00m32.5s), 0500/4500 VUs, 49926 complete and 0 interrupted iterations
+cache_hit        [  54% ] 500 VUs   0m32.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m33.5s), 0500/4500 VUs, 50424 complete and 0 interrupted iterations
+cache_hit        [  56% ] 500 VUs   0m33.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m34.5s), 0500/4500 VUs, 50924 complete and 0 interrupted iterations
+cache_hit        [  58% ] 500 VUs   0m34.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m35.5s), 0500/4500 VUs, 51424 complete and 0 interrupted iterations
+cache_hit        [  59% ] 500 VUs   0m35.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m36.5s), 0500/4500 VUs, 51923 complete and 0 interrupted iterations
+cache_hit        [  61% ] 500 VUs   0m36.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m37.5s), 0500/4500 VUs, 52423 complete and 0 interrupted iterations
+cache_hit        [  63% ] 500 VUs   0m37.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m38.5s), 0500/4500 VUs, 52923 complete and 0 interrupted iterations
+cache_hit        [  64% ] 500 VUs   0m38.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m39.5s), 0500/4500 VUs, 53422 complete and 0 interrupted iterations
+cache_hit        [  66% ] 500 VUs   0m39.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m40.5s), 0500/4500 VUs, 53920 complete and 0 interrupted iterations
+cache_hit        [  68% ] 500 VUs   0m40.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m41.5s), 0500/4500 VUs, 54418 complete and 0 interrupted iterations
+cache_hit        [  69% ] 500 VUs   0m41.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m42.5s), 0500/4500 VUs, 54918 complete and 0 interrupted iterations
+cache_hit        [  71% ] 500 VUs   0m42.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m43.5s), 0500/4500 VUs, 55418 complete and 0 interrupted iterations
+cache_hit        [  73% ] 500 VUs   0m43.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m44.5s), 0500/4500 VUs, 55918 complete and 0 interrupted iterations
+cache_hit        [  74% ] 500 VUs   0m44.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m45.5s), 0500/4500 VUs, 56418 complete and 0 interrupted iterations
+cache_hit        [  76% ] 500 VUs   0m45.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m46.5s), 0500/4500 VUs, 56914 complete and 0 interrupted iterations
+cache_hit        [  78% ] 500 VUs   0m46.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m47.5s), 0500/4500 VUs, 57414 complete and 0 interrupted iterations
+cache_hit        [  79% ] 500 VUs   0m47.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m48.5s), 0500/4500 VUs, 57910 complete and 0 interrupted iterations
+cache_hit        [  81% ] 500 VUs   0m48.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m49.5s), 0500/4500 VUs, 58410 complete and 0 interrupted iterations
+cache_hit        [  83% ] 500 VUs   0m49.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m50.5s), 0500/4500 VUs, 58909 complete and 0 interrupted iterations
+cache_hit        [  84% ] 500 VUs   0m50.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m51.5s), 0500/4500 VUs, 59407 complete and 0 interrupted iterations
+cache_hit        [  86% ] 500 VUs   0m51.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m52.5s), 0500/4500 VUs, 59901 complete and 0 interrupted iterations
+cache_hit        [  88% ] 500 VUs   0m52.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m53.5s), 0500/4500 VUs, 60395 complete and 0 interrupted iterations
+cache_hit        [  89% ] 500 VUs   0m53.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m54.5s), 0500/4500 VUs, 60894 complete and 0 interrupted iterations
+cache_hit        [  91% ] 500 VUs   0m54.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m55.5s), 0500/4500 VUs, 61392 complete and 0 interrupted iterations
+cache_hit        [  93% ] 500 VUs   0m55.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m56.5s), 0500/4500 VUs, 61889 complete and 0 interrupted iterations
+cache_hit        [  94% ] 500 VUs   0m56.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m57.5s), 0500/4500 VUs, 62382 complete and 0 interrupted iterations
+cache_hit        [  96% ] 500 VUs   0m57.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m58.5s), 0500/4500 VUs, 62881 complete and 0 interrupted iterations
+cache_hit        [  98% ] 500 VUs   0m58.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (00m59.5s), 0500/4500 VUs, 63380 complete and 0 interrupted iterations
+cache_hit        [  99% ] 500 VUs   0m59.5s/1m0s   
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+running (01m00.5s), 0215/4500 VUs, 63880 complete and 0 interrupted iterations
+cache_hit      Γåô [ 100% ] 500 VUs   1m0s           
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            
+
+
+  Γûê THRESHOLDS 
+
+    http_req_duration
+    Γ£ù 'p(95)<200' p(95)=1.79s
+    Γ£ù 'p(99)<500' p(99)=3.13s
+
+    http_req_failed
+    Γ£ù 'rate<0.01' rate=60.08%
+
+
+  Γûê TOTAL RESULTS 
+
+    checks_total.......: 66095  1083.415932/s
+    checks_succeeded...: 38.80% 25651 out of 66095
+    checks_failed......: 61.19% 40444 out of 66095
+
+    Γ£ù status is 200
+      Γå│  39% ΓÇö Γ£ô 25581 / Γ£ù 38514
+    Γ£ù data is consistent
+      Γå│  3% ΓÇö Γ£ô 70 / Γ£ù 1930
+
+    HTTP
+    http_req_duration..............: avg=268.62ms min=0s       med=0s     max=4.7s  p(90)=869.85ms p(95)=1.79s
+      { expected_response:true }...: avg=590.73ms min=1.04ms   med=7.73ms max=4.7s  p(90)=2.09s    p(95)=2.65s
+    http_req_failed................: 60.08% 38514 out of 64095
+    http_reqs......................: 64095  1050.632335/s
+
+    EXECUTION
+    iteration_duration.............: avg=1.48s    min=416.07ms med=1.26s  max=5.71s p(90)=2.13s    p(95)=2.92s
+    iterations.....................: 64095  1050.632335/s
+    vus............................: 215    min=215            max=4500
+    vus_max........................: 4500   min=4500           max=4500
+
+    NETWORK
+    data_received..................: 37 MB  602 kB/s
+    data_sent......................: 2.5 MB 42 kB/s
+
+
+
+
+running (01m01.0s), 0000/4500 VUs, 64095 complete and 0 interrupted iterations
+cache_hit      Γ£ô [ 100% ] 500 VUs   1m0s           
+cache_stampede Γ£ô [ 100% ] 2000 VUs  00m04.2s/10m0s  2000/2000 shared iters
+homepage_load  Γ£ô [ 100% ] 1000 VUs  30s            
+multi_show     Γ£ô [ 100% ] 1000 VUs  30s            

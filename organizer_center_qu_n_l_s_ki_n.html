@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Organizer Center - Quản lý sự kiện</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#26bc8a",
+                        "primary-container": "#26bc8a",
+                        "on-primary": "#003826",
+                        "on-primary-container": "#004530",
+                        "background": "#000000",
+                        "surface": "#131313",
+                        "surface-container": "#1A1A1A",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-lowest": "#0e0e0e",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-container-highest": "#353535",
+                        "surface-variant": "#353535",
+                        "outline": "#86948b",
+                        "outline-variant": "#3d4a42",
+                        "on-surface": "#FFFFFF",
+                        "on-surface-variant": "#A0A0A0",
+                        "text-high-emphasis": "#FFFFFF",
+                        "text-medium-emphasis": "#A0A0A0",
+                        "input-level-2": "#2D2D2D",
+                        "card-level-1": "#1A1A1A",
+                        "error-red": "#EF4444",
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "body": ["Inter", "sans-serif"],
+                        "headline": ["Hanken Grotesk", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #000000; color: #FFFFFF; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Hanken Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .active-step-indicator { position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background-color: #26BC8A; }
+        ::-webkit-calendar-picker-indicator { filter: invert(1); }
+        .glass-card { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .neon-glow { box-shadow: 0 0 15px rgba(38, 188, 138, 0.3); }
+        .ticket-notch { position: relative; }
+        .ticket-notch::after, .ticket-notch::before {
+            content: ''; position: absolute; width: 24px; height: 24px; background-color: #000000; border-radius: 50%; left: -12px;
+        }
+        .ticket-notch::before { top: 25%; }
+        .ticket-notch::after { bottom: 25%; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const TopNav = () => (
+            <nav class="bg-surface-container-lowest fixed top-0 w-full z-50 h-16 border-b border-outline-variant shadow-md">
+                <div class="flex justify-between items-center px-6 h-16 w-full max-w-[1400px] mx-auto">
+                    <div class="flex items-center gap-8">
+                        <Link to="/" class="text-2xl font-headline font-black text-primary">Organizer Center</Link>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <Link to="/create-step-1" class="h-10 bg-primary text-on-primary px-6 rounded-lg font-semibold text-sm hover:brightness-110 flex items-center shadow-lg shadow-primary/20">
+                            Tạo Sự Kiện
+                        </Link>
+                        <div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+                            <img alt="Quản trị viên" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDj5wzU0cyA8d-lncZZUFi2xGlalI6IBhpNPY-94YwSCUVlYbLw0F84mPdNW2pl8ejrr7Xl9A6xhduWfKrQ3HdVSg02HIfesGQT_C33Bw_F4iRymyRhSaZXwgoVNUsJg7l85xkCXzAmpiJpQYTEluZVf7Zph8UTL6gwF33VuKQcnlvv_vc3V0jAmrwE2mgsRmf2IkGhdlnjRlXSjM0JQyCIrki500sY8Fzwo6S4J7mvEZnQ4sM10ETZgVmTg_bN3wNywgitRtsqkRM" />
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        );
+
+        const SideNav = () => {
+            const location = useLocation();
+            const isActive = (path) => location.pathname === path;
+            
+            return (
+                <aside class="hidden lg:flex fixed left-0 top-16 bottom-0 w-64 bg-surface-container-lowest border-r border-outline-variant flex-col py-6 gap-2">
+                    <div class="flex flex-col gap-1 px-2">
+                        <Link to="/" class={`rounded-xl flex items-center gap-3 px-4 py-3 transition-all ${isActive('/') ? 'bg-primary/10 text-primary font-bold' : 'text-text-medium-emphasis hover:text-white hover:bg-surface-variant'}`}>
+                            <span class="material-symbols-outlined">event</span>
+                            <span class="text-sm font-semibold">Sự kiện của tôi</span>
+                        </Link>
+                        <Link to="/files" class={`rounded-xl flex items-center gap-3 px-4 py-3 transition-all ${isActive('/files') ? 'bg-primary/10 text-primary font-bold' : 'text-text-medium-emphasis hover:text-white hover:bg-surface-variant'}`}>
+                            <span class="material-symbols-outlined">folder</span>
+                            <span class="text-sm font-semibold">Quản lý file</span>
+                        </Link>
+                    </div>
+                    <div class="mt-auto px-4 pt-4 border-t border-outline-variant">
+                        <a class="flex items-center gap-3 text-text-medium-emphasis hover:text-white px-4 py-3 rounded-xl transition-all" href="#">
+                            <span class="material-symbols-outlined">logout</span>
+                            <span class="text-sm font-semibold">Đăng xuất</span>
+                        </a>
+                    </div>
+                </aside>
+            );
+        };
+
+        const Stepper = ({ currentStep }) => {
+            const steps = [
+                { id: 1, label: 'Thông tin' },
+                { id: 2, label: 'Loại vé' },
+                { id: 3, label: 'Thanh toán' },
+                { id: 4, label: 'Hoàn tất' }
+            ];
+
+            return (
+                <div class="mb-10 bg-card-level-1 p-6 rounded-xl border border-outline-variant">
+                    <div class="flex flex-wrap items-center justify-between gap-4 md:gap-0 relative">
+                        {steps.map((step) => (
+                            <div key={step.id} class="flex flex-col items-center gap-2 relative z-10 flex-1">
+                                <div class={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${currentStep >= step.id ? 'bg-primary text-on-primary' : 'bg-input-level-2 text-text-medium-emphasis'}`}>
+                                    {currentStep > step.id ? <span class="material-symbols-outlined text-sm">check</span> : step.id}
+                                </div>
+                                <span class={`text-xs font-bold ${currentStep === step.id ? 'text-primary' : 'text-text-medium-emphasis'}`}>
+                                    {step.label}
+                                </span>
+                                {currentStep === step.id && <div class="active-step-indicator"></div>}
+                            </div>
+                        ))}
+                        <div class="absolute top-5 left-[12.5%] right-[12.5%] h-px bg-outline-variant -z-0"></div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Screen Components ---
+
+        const Dashboard = () => (
+            <div class="flex-grow lg:ml-64 p-6 md:p-10 pt-28">
+                <div class="max-w-[1200px] mx-auto">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                        <div>
+                            <h1 class="text-3xl font-headline font-bold text-white mb-2">Sự kiện của tôi</h1>
+                            <p class="text-text-medium-emphasis">Quản lý và theo dõi các trải nghiệm trực tiếp sắp tới của bạn.</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="relative min-w-[280px]">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                                <input class="w-full bg-input-level-2 border border-outline-variant rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" placeholder="Tìm kiếm sự kiện..." type="text" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 mb-8">
+                        <button class="px-6 py-2 rounded-full bg-primary text-on-primary text-xs font-bold">Tất cả</button>
+                        <button class="px-6 py-2 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant text-xs font-bold">Đã đăng</button>
+                        <button class="px-6 py-2 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface-variant text-xs font-bold">Bản nháp</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        {/* Event Card 1 */}
+                        <div class="group bg-surface-container rounded-xl overflow-hidden flex flex-col sm:flex-row border border-transparent hover:border-primary/30 transition-all duration-300 ticket-notch">
+                            <div class="sm:w-2/5 relative h-48 sm:h-auto overflow-hidden">
+                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD45MuNv6ym8q_8DqJ5OgH5REAtsjZb5mJ7oV5J38feMF_mYJz_MYuFepMPJIjZtQh_ru1ADauqQ64DGIoY5W2vnyyUc_jvKtGzwfzPk9EnzTU1h2owzt31VYKJHUSOntbkNbkx-ZmQbXRptuD03P3-xsVUysFjIB60AE3RunldN2XmvOEU-001AaP8HELY61Yob973MHf4JCARCd0jDytrwVa462lY6wmNZ47T__nNXYa6XkKmWuDm0-dSWJ8HEvZiDBP4_qGLaz0" />
+                                <div class="absolute top-4 left-4 bg-primary text-on-primary px-3 py-1 rounded text-[10px] font-bold">Đang bán</div>
+                            </div>
+                            <div class="sm:w-3/5 p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-lg font-headline font-bold text-white mb-2 group-hover:text-primary transition-colors">Electric Forest: Midnight Pulse</h3>
+                                    <div class="flex items-center gap-2 text-on-surface-variant mb-2">
+                                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                                        <span class="text-xs">Dec 24, 2024 • 20:00</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-on-surface-variant mb-4">
+                                        <span class="material-symbols-outlined text-sm">location_on</span>
+                                        <span class="text-xs">Saigon Exhibition Center (SECC)</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-outline-variant pt-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-on-surface-variant text-[10px] uppercase font-bold">Vé đã bán</span>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-white font-bold">1,240</span>
+                                            <span class="text-on-surface-variant text-xs">/ 2,000</span>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 rounded-lg bg-surface-input hover:bg-primary/20 hover:text-primary transition-all">
+                                        <span class="material-symbols-outlined">more_vert</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Event Card 2 */}
+                        <div class="group bg-surface-container rounded-xl overflow-hidden flex flex-col sm:flex-row border border-transparent hover:border-primary/30 transition-all duration-300 ticket-notch">
+                            <div class="sm:w-2/5 relative h-48 sm:h-auto overflow-hidden">
+                                <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPcB-Q1xnXdk0Lkiqv0fwKxvS2nXC8Wnuo7jvBH_bwyj0AGfDQBXTUdsj7lhH14ahGBU-KaA91VqRnI0fyRCoC2zjyXm0W1MD7AOXT81fK9LtbLg6bGmYvJIvLpVWIvjhCvK0GvVkRzF953xxek5Gpu9C4VcKSDofDA352EVp5BNFVEpz7PvUghlxTSP19yjzKaiLIX5gsQiDUzsz2ApdG-w6TYQ_yIGA0cQYqBFNQ5ApQgHlTPRrBZ5av--WZm61DMPsO3937r20" />
+                                <div class="absolute top-4 left-4 bg-outline-variant text-on-surface px-3 py-1 rounded text-[10px] font-bold">Nháp</div>
+                            </div>
+                            <div class="sm:w-3/5 p-6 flex flex-col justify-between">
+                                <div>
+                                    <h3 class="text-lg font-headline font-bold text-white mb-2 group-hover:text-primary transition-colors">Neo-Jazz Evening: Obsidian Series</h3>
+                                    <div class="flex items-center gap-2 text-on-surface-variant mb-2">
+                                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                                        <span class="text-xs">Jan 15, 2025 • 19:30</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-on-surface-variant mb-4">
+                                        <span class="material-symbols-outlined text-sm">location_on</span>
+                                        <span class="text-xs">The Grand Theater, Dist 1</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-outline-variant pt-4">
+                                    <div class="flex flex-col opacity-50">
+                                        <span class="text-on-surface-variant text-[10px] uppercase font-bold">Vé đã bán</span>
+                                        <div class="flex items-baseline gap-1">
+                                            <span class="text-white font-bold">0</span>
+                                            <span class="text-on-surface-variant text-xs">/ 500</span>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 rounded-lg bg-surface-input hover:bg-primary/20 hover:text-primary transition-all">
+                                        <span class="material-symbols-outlined">edit</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const CreateStep1 = () => {
+            const navigate = useNavigate();
+            return (
+                <div class="lg:ml-64 pt-28 pb-32 px-6 max-w-[1400px] mx-auto min-h-screen">
+                    <Stepper currentStep={1} />
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 flex flex-col gap-8">
+                            <section class="bg-card-level-1 rounded-xl border border-outline-variant overflow-hidden">
+                                <div class="px-6 py-4 border-b border-outline-variant">
+                                    <h2 class="text-xl font-headline font-bold text-on-surface">Thông tin cơ bản</h2>
+                                </div>
+                                <div class="p-6 flex flex-col gap-6">
+                                    <div>
+                                        <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Tên sự kiện <span class="text-error-red">*</span></label>
+                                        <input class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface focus:ring-primary focus:border-primary" placeholder="Nhập tên sự kiện hấp dẫn của bạn" type="text" />
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Thể loại</label>
+                                            <select class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface focus:ring-primary">
+                                                <option>Âm nhạc</option>
+                                                <option>Thể thao</option>
+                                                <option>Hội thảo</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Hashtag</label>
+                                            <input class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface focus:ring-primary" placeholder="#music #concert" type="text" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="bg-card-level-1 rounded-xl border border-outline-variant overflow-hidden">
+                                <div class="px-6 py-4 border-b border-outline-variant">
+                                    <h2 class="text-xl font-headline font-bold text-on-surface">Thời gian & Địa điểm</h2>
+                                </div>
+                                <div class="p-6 flex flex-col gap-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Bắt đầu</label>
+                                            <input class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface" type="datetime-local" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Kết thúc</label>
+                                            <input class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface" type="datetime-local" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-text-medium-emphasis mb-2 uppercase">Địa chỉ tổ chức</label>
+                                        <input class="w-full h-11 px-4 border border-outline-variant rounded-lg bg-input-level-2 text-on-surface" placeholder="Địa chỉ cụ thể..." type="text" />
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="flex flex-col gap-8">
+                            <section class="bg-card-level-1 rounded-xl border border-outline-variant overflow-hidden">
+                                <div class="px-6 py-4 border-b border-outline-variant">
+                                    <h2 class="text-xl font-headline font-bold text-on-surface">Hình ảnh sự kiện</h2>
+                                </div>
+                                <div class="p-6">
+                                    <div class="relative group cursor-pointer border-2 border-dashed border-outline-variant rounded-xl h-48 flex flex-col items-center justify-center gap-2 hover:border-primary/50 transition-all bg-input-level-2">
+                                        <span class="material-symbols-outlined text-4xl text-text-medium-emphasis">add_photo_alternate</span>
+                                        <p class="text-xs text-primary font-bold">Tải ảnh lên</p>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                    <footer class="fixed bottom-0 left-0 right-0 lg:left-64 bg-card-level-1 border-t border-outline-variant shadow-2xl z-40">
+                        <div class="max-w-[1400px] mx-auto px-6 py-4 flex justify-between items-center">
+                            <button class="flex items-center gap-2 text-text-medium-emphasis font-semibold text-sm hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-base">save</span>Lưu bản nháp
+                            </button>
+                            <button onClick={() => navigate('/create-step-2')} class="h-11 px-8 bg-primary text-on-primary font-bold rounded-lg text-sm flex items-center gap-2 shadow-lg shadow-primary/20">
+                                Bước tiếp theo <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+            );
+        };
+
+        const CreateStep2 = () => {
+            const navigate = useNavigate();
+            const [isModalOpen, setIsModalOpen] = useState(false);
+
+            return (
+                <div class="lg:ml-64 pt-28 pb-32 px-6 max-w-[1400px] mx-auto min-h-screen">
+                    <Stepper currentStep={2} />
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h1 class="text-2xl font-headline font-bold text-white mb-2">Cấu hình loại vé</h1>
+                            <p class="text-on-surface-variant text-sm">Tạo các hạng vé khác nhau để phù hợp với nhu cầu.</p>
+                        </div>
+                        <button onClick={() => setIsModalOpen(true)} class="bg-primary text-on-primary px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-md">
+                            <span class="material-symbols-outlined">add</span> Thêm loại vé mới
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-4">
+                            <div class="bg-surface-container p-6 rounded-xl border border-outline-variant/20 flex items-center justify-between">
+                                <div class="flex items-center gap-6">
+                                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <span class="material-symbols-outlined">local_activity</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white">Vé Phổ thông (Early Bird)</h4>
+                                        <p class="text-xs text-on-surface-variant mt-1">Số lượng: 150 / 500 • <span class="text-primary">Đang bán</span></p>
+                                    </div>
+                                </div>
+                                <div class="text-right flex items-center gap-8">
+                                    <div class="hidden sm:block">
+                                        <p class="text-xs text-on-surface-variant mb-1">Giá vé</p>
+                                        <p class="font-bold text-white">250.000đ</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="p-2 text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">edit</span></button>
+                                        <button class="p-2 text-on-surface-variant hover:text-error-red"><span class="material-symbols-outlined">delete</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-1">
+                            <div class="bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/20">
+                                <h3 class="text-lg font-headline font-bold text-white mb-6">Tổng quan vé</h3>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center py-2 border-b border-outline-variant/10">
+                                        <span class="text-on-surface-variant text-sm">Tổng số hạng vé</span>
+                                        <span class="font-bold text-white">01</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-on-surface-variant text-sm">Tổng số vé</span>
+                                        <span class="font-bold text-white">500</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {isModalOpen && (
+                        <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                            <div class="bg-surface-container w-full max-w-2xl rounded-2xl border border-outline-variant/30 overflow-hidden">
+                                <div class="px-8 py-6 flex justify-between items-center border-b border-outline-variant/20">
+                                    <h2 class="text-xl font-headline font-bold">Cấu hình loại vé mới</h2>
+                                    <button onClick={() => setIsModalOpen(false)} class="material-symbols-outlined p-2 hover:bg-surface-variant rounded-full">close</button>
+                                </div>
+                                <div class="p-8 space-y-6">
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2">Tên loại vé *</label>
+                                        <input class="w-full h-11 px-4 bg-surface-container-high border-outline-variant/30 rounded-lg text-white" placeholder="VD: Vé VIP sớm..." type="text" />
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Giá (VNĐ)</label>
+                                            <input class="w-full h-11 px-4 bg-surface-container-high border-outline-variant/30 rounded-lg text-white" placeholder="500000" type="number" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold mb-2">Số lượng</label>
+                                            <input class="w-full h-11 px-4 bg-surface-container-high border-outline-variant/30 rounded-lg text-white" placeholder="100" type="number" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-8 border-t border-outline-variant/20 flex gap-3 justify-end">
+                                    <button onClick={() => setIsModalOpen(false)} class="px-6 py-2.5 text-on-surface-variant hover:bg-surface-variant rounded-lg">Hủy</button>
+                                    <button onClick={() => setIsModalOpen(false)} class="bg-primary text-on-primary px-8 py-2.5 rounded-lg font-bold">Lưu loại vé</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <footer class="fixed bottom-0 left-0 lg:left-64 right-0 h-20 bg-surface-container border-t border-outline-variant/30 px-8 flex items-center justify-between z-40">
+                        <button onClick={() => navigate('/create-step-1')} class="flex items-center gap-2 text-on-surface hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined">arrow_back</span> Quay lại
+                        </button>
+                        <button onClick={() => navigate('/create-step-3')} class="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold shadow-md neon-glow">
+                            Bước tiếp theo: Thanh toán
+                        </button>
+                    </footer>
+                </div>
+            );
+        };
+
+        const CreateStep3 = () => {
+            const navigate = useNavigate();
+            return (
+                <div class="lg:ml-64 pt-28 pb-32 px-6 max-w-[1000px] mx-auto min-h-screen">
+                    <Stepper currentStep={3} />
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <div class="lg:col-span-7 space-y-6">
+                            <div class="glass-card p-6 rounded-xl">
+                                <h2 class="text-xl font-headline font-bold mb-6 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary">account_balance_wallet</span> Phương thức thanh toán
+                                </h2>
+                                <div class="space-y-4">
+                                    <label class="flex items-center p-4 border-2 border-primary bg-primary/10 rounded-xl cursor-pointer">
+                                        <input checked name="pay" type="radio" class="w-5 h-5 text-primary" />
+                                        <div class="ml-4 flex-1">
+                                            <span class="font-bold text-white">Ví Ticketbox</span>
+                                            <p class="text-xs text-on-surface-variant">Thanh toán nhanh qua hệ thống cổng (Khuyên dùng)</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-4 border-2 border-outline-variant rounded-xl cursor-pointer">
+                                        <input name="pay" type="radio" class="w-5 h-5 text-primary" />
+                                        <div class="ml-4 flex-1">
+                                            <span class="font-bold text-white">Chuyển khoản ngân hàng</span>
+                                            <p class="text-xs text-on-surface-variant">Tự động đối soát và kích hoạt vé qua QR</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-5 space-y-6">
+                            <div class="glass-card p-6 rounded-xl">
+                                <h3 class="font-bold text-white mb-4">Cài đặt phí dịch vụ</h3>
+                                <div class="space-y-4">
+                                    <label class="flex items-start gap-3 p-3 bg-surface-container rounded-lg cursor-pointer">
+                                        <input checked name="fee" type="radio" class="mt-1" />
+                                        <div>
+                                            <p class="font-bold text-sm">Người mua chịu phí</p>
+                                            <p class="text-[10px] text-on-surface-variant">Phí 3% + 5,000đ sẽ cộng vào giá vé.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <footer class="fixed bottom-0 left-0 lg:left-64 right-0 h-20 bg-surface-container border-t border-outline-variant/30 px-8 flex items-center justify-between z-40">
+                        <button onClick={() => navigate('/create-step-2')} class="flex items-center gap-2 text-on-surface hover:text-primary">
+                            <span class="material-symbols-outlined">arrow_back</span> Quay lại
+                        </button>
+                        <button onClick={() => navigate('/create-step-4')} class="bg-primary text-on-primary px-8 py-3 rounded-xl font-bold shadow-md neon-glow">
+                            Bước cuối cùng: Review
+                        </button>
+                    </footer>
+                </div>
+            );
+        };
+
+        const CreateStep4 = () => {
+            const navigate = useNavigate();
+            const [published, setPublished] = useState(false);
+
+            const handlePublish = () => {
+                setPublished(true);
+                setTimeout(() => setPublished(false), 3000);
+            };
+
+            return (
+                <div class="lg:ml-64 pt-28 pb-32 px-6 max-w-[1000px] mx-auto min-h-screen">
+                    <Stepper currentStep={4} />
+                    <div class="text-center mb-12">
+                        <div class="inline-flex items-center justify-center w-20 h-20 bg-primary/20 rounded-full mb-6 relative animate-bounce">
+                            <span class="material-symbols-outlined text-5xl text-primary">stars</span>
+                        </div>
+                        <h1 class="text-3xl font-headline font-bold text-white mb-3">Sẵn sàng xuất bản!</h1>
+                        <p class="text-on-surface-variant max-w-xl mx-auto">Kiểm tra thông tin lần cuối để đảm bảo mọi thứ hoàn hảo.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 space-y-8">
+                            <section class="bg-surface-container-low rounded-xl border border-outline-variant/30 overflow-hidden">
+                                <div class="relative h-48 bg-surface-container-high">
+                                    <img class="w-full h-full object-cover opacity-60" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZzzGTE1ahkQAFKw24lvDxjnEo2SKA2O0nJGcByRIMDDz8NBWg2mR_qWarxmO7INB5vmTLCL90Ax8ARG1vqb-fvN37S4k_-seRtxz31GhqztCl3vfeRyJN0tKy6RCcCNOVe1L0kQkFhV_yyQj8WS6VsZH65TxolqFhcckfyiqM6XM7Pdy5Xyper1ECuappAr6ynMQIV-xdwUPAa1LEaR5bYlSeo6MFzGAgazlHsXGmc9XyVaedKi5s1N-pFsg5TBP9cXiR0zR-lxg" />
+                                    <div class="absolute bottom-4 left-6">
+                                        <span class="px-3 py-1 bg-primary text-on-primary text-[10px] font-bold rounded-full mb-2 inline-block">PREVIEW</span>
+                                        <h2 class="text-xl font-headline font-bold text-white">Hội nghị Công nghệ 2024</h2>
+                                    </div>
+                                </div>
+                                <div class="p-6 grid grid-cols-3 gap-4 border-b border-outline-variant/20">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary">calendar_today</span>
+                                        <span class="text-xs font-bold">25/12/2024</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary">schedule</span>
+                                        <span class="text-xs font-bold">09:00 - 17:00</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary">location_on</span>
+                                        <span class="text-xs font-bold truncate">Trung tâm SECC</span>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="space-y-6">
+                            <section class="bg-surface-container-low rounded-xl border border-outline-variant/30 p-6">
+                                <h3 class="font-bold text-white mb-4">Checklist</h3>
+                                <ul class="space-y-3">
+                                    <li class="flex items-center gap-2 text-xs text-primary"><span class="material-symbols-outlined text-base">check_circle</span> Thông tin sự kiện</li>
+                                    <li class="flex items-center gap-2 text-xs text-primary"><span class="material-symbols-outlined text-base">check_circle</span> Cấu hình vé</li>
+                                    <li class="flex items-center gap-2 text-xs text-primary"><span class="material-symbols-outlined text-base">check_circle</span> Thanh toán</li>
+                                </ul>
+                            </section>
+                        </div>
+                    </div>
+
+                    <footer class="fixed bottom-0 left-0 lg:left-64 right-0 h-20 bg-surface-container border-t border-outline-variant/30 px-8 flex items-center justify-between z-40">
+                        <button onClick={() => navigate('/create-step-3')} class="flex items-center gap-2 text-on-surface hover:text-primary">
+                            <span class="material-symbols-outlined">arrow_back</span> Quay lại
+                        </button>
+                        <button onClick={handlePublish} class="bg-primary text-on-primary px-10 py-3 rounded-xl font-black shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2">
+                            XUẤT BẢN NGAY <span class="material-symbols-outlined">rocket_launch</span>
+                        </button>
+                    </footer>
+
+                    {published && (
+                        <div class="fixed bottom-24 right-8 bg-surface-container-highest text-primary px-6 py-4 rounded-xl shadow-2xl border border-primary/30 flex items-center gap-3">
+                            <span class="material-symbols-outlined">check_circle</span>
+                            <span class="font-bold">Sự kiện đã được xuất bản thành công!</span>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const FilesPage = () => (
+            <div class="flex-grow lg:ml-64 p-6 md:p-10 pt-28">
+                <div class="max-w-[1200px] mx-auto">
+                    <div class="mb-10">
+                        <h1 class="text-3xl font-headline font-bold text-white mb-2">Quản lý file</h1>
+                        <p class="text-text-medium-emphasis">Lưu trữ và tổ chức các báo cáo dữ liệu của bạn.</p>
+                    </div>
+
+                    <div class="bg-surface-container-low border border-outline-variant rounded-xl p-6 mb-8">
+                        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                            <div class="relative flex-1 max-w-md w-full">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                                <input class="w-full bg-surface-container-high border-outline-variant rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:ring-primary focus:border-primary border" placeholder="Tìm kiếm file .csv..." type="text" />
+                            </div>
+                            <div class="flex gap-4">
+                                <button class="px-6 py-2 border border-primary text-primary rounded-lg font-bold hover:bg-primary/10 transition-all">Upload .csv</button>
+                                <button class="bg-primary text-on-primary px-6 py-2 rounded-lg font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined">download</span> Xuất file mới
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-container-low border border-outline-variant rounded-xl overflow-hidden">
+                        <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+                            <h3 class="font-bold text-white">Lịch sử xuất file</h3>
+                            <span class="text-xs text-text-medium-emphasis">Hiển thị các kết quả gần nhất</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="bg-surface-container-high/50 border-b border-outline-variant">
+                                        <th class="px-6 py-4 text-xs font-bold text-text-medium-emphasis uppercase">Tên file</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-text-medium-emphasis uppercase">Ngày yêu cầu</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-text-medium-emphasis uppercase">Trạng thái</th>
+                                        <th class="px-6 py-4 text-xs font-bold text-text-medium-emphasis uppercase text-right">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline-variant">
+                                    <tr class="hover:bg-surface-container-highest/30 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-10 h-10 bg-surface-container-highest rounded flex items-center justify-center text-primary">
+                                                    <span class="material-symbols-outlined">description</span>
+                                                </div>
+                                                <div>
+                                                    <p class="text-sm font-bold text-white">Doanh_thu_t12_2024.csv</p>
+                                                    <p class="text-[10px] text-text-medium-emphasis">1.2 MB • Báo cáo tài chính</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">15/12/2024 14:30</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">Hoàn tất</span>
+                                        </td>
+                                        <td class="px-6 py-4 text-right">
+                                            <button class="text-primary hover:underline text-xs font-bold">Tải về</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // --- Root App ---
+
+        const App = () => {
+            return (
+                <div class="min-h-screen bg-background">
+                    <TopNav />
+                    <SideNav />
+                    <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/create-step-1" element={<CreateStep1 />} />
+                        <Route path="/create-step-2" element={<CreateStep2 />} />
+                        <Route path="/create-step-3" element={<CreateStep3 />} />
+                        <Route path="/create-step-4" element={<CreateStep4 />} />
+                        <Route path="/files" element={<FilesPage />} />
+                    </Routes>
+                </div>
+            );
+        };
+
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(
+            <MemoryRouter>
+                <App />
+            </MemoryRouter>
+        );
+    </script>
+</body>
+</html>
